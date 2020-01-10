@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group 'eu.fbk.threedom'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    compile 'org.projectlombok:lombok:1.+'
+    
+    compile "args4j:args4j:2+"
+    compile "args4j:args4j-site:2+"
+
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+
+    // https://mvnrepository.com/artifact/javax.vecmath/vecmath
+    compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
+}
