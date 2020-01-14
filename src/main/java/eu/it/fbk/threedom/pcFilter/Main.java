@@ -3,7 +3,6 @@ package eu.it.fbk.threedom.pcFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
 
-import javax.vecmath.Vector3f;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -16,32 +15,24 @@ import java.util.Random;
 
 public class Main {
 
+    @Argument(index=0, required = true, metaVar = "First input file") File inFile1;
+    @Argument(index=1, required = true, metaVar = "Second input file") File inFile2;
+    @Argument(index=2, required = true, metaVar = "VoxelSide") Float voxelSide;
+    @Option(name = "-o", aliases = { "--output" }, metaVar = "output") File outFile = new File("");
+    @Option(name = "-w", aliases = { "--overwrite" }, metaVar = "overWrite") Boolean overWrite;
+
     public static boolean DEBUG;
+    private static final int RANDOM_POINTS_NUMBER = 10000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 1.0f;
+    private static final String RANDOM_FILE_HEADER = "// X Y Z R G B FileType Intensity";
+    private static final String RANDOM_FILE_FAKE_PROPERTIES_1 = " 0 255 0 1";
+    private static final String RANDOM_FILE_FAKE_PROPERTIES_2 = " 0 0 255 1";
 
-    @Argument(required = true, metaVar = "First input file")
-    File inFile;
-
-    //@Argument(required = true, metaVar = "Second input file")
-    //File inFile2;
-
-    //@Argument(required = true, metaVar = "VoxelSide")
-    //Float voxelSide;
-
-    @Option(name = "-o", metaVar = "output")
-    File outFile = new File("");
-
-    @Option(name = "-w", metaVar = "overWrite")
-    Boolean overWrite;
-
-    private static String filePath;
-    private static String fileName;
+    private static String filePath, fileName, fn1, fn2;
 
     // timer
     private static long start;
     private static long time;
-
-//    @Option(name = "-p", metaVar = "animation period (ms)")
-//    int animationPeriod = 0;
 
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -62,7 +53,7 @@ public class Main {
             // print the list of available options
             parser.printUsage(System.err);
             System.err.println();
-            System.err.print("animation period set to 0 means no animation");
+            //System.err.print("animation period set to 0 means no animation");
 
             // print option sample. This is useful some time
             System.err.println("  Example: pcFilter "+parser.printExample(OptionHandlerFilter.ALL));
@@ -73,180 +64,145 @@ public class Main {
     private void run() throws Exception {
         ///////////////////////////////////////////////////////
         // create an output file
-        filePath = FilenameUtils.getFullPath(inFile.getPath());
-        fileName = FilenameUtils.getBaseName(inFile.getPath());
-        fileName = FilenameUtils.removeExtension(fileName);
+        ///////////////////////////////////////////////////////
+        filePath = FilenameUtils.getFullPath(inFile1.getPath());
+        System.out.println("filePath: " + filePath);
+        fn1 = FilenameUtils.getBaseName(inFile1.getPath()); //System.out.println("fn1: " + fn1);
+        fn2 = FilenameUtils.getBaseName(inFile2.getPath()); //System.out.println("fn2: " + fn2);
 
         Path out = null;
 
         try {
             if (outFile.getName() == "")
-                outFile = new File(FilenameUtils.removeExtension(inFile.getName()) + "_result.txt");
+                outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+            System.out.println("outFile: " + outFile);
+
 
             out = Paths.get(outFile.toURI());
             Files.createFile(out);
         } catch (FileAlreadyExistsException foee) {
-            if(overWrite == null || !overWrite) {
+            if (overWrite == null || !overWrite) {
                 System.out.println("\nWARNING! the output file already exists");
                 System.exit(1);
-            }else
-                System.out.println("overWrite file");
+            } else
+                System.out.println("..overWrite file");
         }
 
 
         ///////////////////////////////////////////////////////
         // use the random function to generate random points
-//        generateRandomData(1000000);
+        ///////////////////////////////////////////////////////
+        if ((fn1.toString() + fn2.toString()).equals("rnd1rnd2")) {
+            generateRandomData(RANDOM_POINTS_NUMBER, 1);
+            generateRandomData(RANDOM_POINTS_NUMBER, 2);
+        }
 
 
         ///////////////////////////////////////////////////////
-        // read all lines
-        Path path = Paths.get(inFile.toURI());
+        // read all lines file 1 & 2
+        ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
-        List<String> data = Files.readAllLines(path);
-        printElapsedTime(start, "..input file1 read");
+        Path path = Paths.get(inFile1.toURI());
+        List<String> file1Data = Files.readAllLines(path);
+        path = Paths.get(inFile2.toURI());
+        List<String> file2Data = Files.readAllLines(path);
+        printElapsedTime(start, "..input files read");
 
-        //start = System.currentTimeMillis();
-        //Path path2 = Paths.get(inFile2.toURI());
-        //List<String> data = Files.readAllLines(path, path2);
-        //printElapsedTime(start, "..input file2 read");
 
         ///////////////////////////////////////////////////////
         // filter the data
         ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
-        PcFilter pcf = new PcFilter(data);
-        pcf.parseData(0.5f);
-        //pcf.parseData(voxelSide);
+        PcFilter pcf = new PcFilter(file1Data, file2Data, voxelSide);
         printElapsedTime(start, "..voxel grid created");
 
-        System.out.println("\n" + pcf.toString());
+        if (Main.DEBUG)
+            System.out.println("\n" + pcf.toString());
 
 
         ///////////////////////////////////////////////////////
         // pick a random voxel to filter
-//        Random rnd = new Random();
-//        int i = rnd.nextInt(pcf.getNumVoxel());
-//        start = System.currentTimeMillis();
-//        ArrayList<Point> pointList = (ArrayList<Point>) pcf.getVoxelPoints(i++);
-//        printElapsedTime(start, "..voxel points retrieved");
-//
-//        if(Main.DEBUG)
-//            System.out.println("\nvoxel " + (i) + "\n\t" + pointList);
-
-
         ///////////////////////////////////////////////////////
-        // pick first non empty voxel
         start = System.currentTimeMillis();
-        int i = 0;
-        ArrayList<Point> pointList = (ArrayList<Point>) pcf.getVoxelPoints(i++);
-        while(pointList == null)
-            pointList = (ArrayList<Point>) pcf.getVoxelPoints(i++);
+        Random rnd = new Random();
+        int i = rnd.nextInt(pcf.getNumVoxel());
+        ArrayList<Point> pointList = (ArrayList<Point>) pcf.getPoints(i);
+
+        while (pointList == null) {
+            i = rnd.nextInt(pcf.getNumVoxel());
+            pointList = (ArrayList<Point>) pcf.getPoints(i);
+        }
+
         printElapsedTime(start, "..voxel points retrieved");
 
-        if(Main.DEBUG)
-            System.out.println("\nvoxel " + i + "\n\t" + pointList);
+        if (Main.DEBUG)
+            System.out.println("\nvoxel (" + i + ")\n\t" + pointList);
 
 
 
         ///////////////////////////////////////////////////////
-        // pick a random voxel to filter
-
+        // write output file
+        ///////////////////////////////////////////////////////
         // convert char array to list of strings
         List<String> dataOut = new ArrayList<>();
 
         start = System.currentTimeMillis();
-        dataOut.add("//X Y Z R G B Intensity");
-        dataOut.add("//filter voxel " + i);
+        dataOut.add(RANDOM_FILE_HEADER);
+        dataOut.add("// filter voxel " + i);
         for(Point p : pointList){
             StringBuilder line = new StringBuilder();
             line.append(p.x + " " + p.y + " " + p.z + " ");
-            //line.append(p.getR() + " " + p.getG() + " " + p.getB() + " ");
-            line.append(255 + " " + 0 + " " + 0 + " ");
-            line.append(1);
+            line.append("255 0 0 " + p.getType() + " " + p.getIntensity());
 
             dataOut.add(line.toString());
         }
+
+        Files.write(out, dataOut);
         printElapsedTime(start, "..output written");
-
-
-//        char[][] solution = pcf.solve();
-
-//        for (int i = 0; i < solution.length; i++) {
-//            StringBuilder line = new StringBuilder();
-//            for (int j = 0; j < solution[0].length; j++) {
-//                line.append(solution[i][j] + " ");
-//            }
-//            dataOut.add(line.toString());
-//        }
-
-
-        ///////////////////////////////////////////////////////
-        // writing result
-//        try {
-//            if(outFile.getName() == "")
-//                outFile = new File(FilenameUtils.removeExtension(inFile.getName()) + "_result.txt");
-//
-//            Path out = Paths.get(outFile.toURI());
-//            Files.createFile(out);
-            Files.write(out, dataOut);
-//        }catch(FileAlreadyExistsException foee){
-//            if(!overWrite) {
-//                System.out.println("\nWARNING! the output file already exists");
-//                System.exit(1);
-//            }else
-//                System.out.println("overWrite file");
-//        }
     }
 
-    private void generateRandomData(int numberOfPoints){
+    private void generateRandomData(int numberOfPoints, int fileType){
         start = System.currentTimeMillis();
 
         List<String> randomIn = new ArrayList<>();
 
-        final float min = 0.0f;
-        final float max = 3.0f;
-
-        String header = "//X Y Z R G B Intensity";
-        String fakeColorIntensity = " 255 255 255 1";
-
-        randomIn.add(header);
         Random rn = new Random();
 
+        // generate first random file
+        randomIn.add(RANDOM_FILE_HEADER);
         for (int i=0; i < numberOfPoints; i++){
-            float rndFX = min + rn.nextFloat() * (max - min);
-            float rndFY = min + rn.nextFloat() * (max - min);
-            float rndFZ = min + rn.nextFloat() * (max - min);
+            float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
+            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
+            float rndFZ = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
 
             randomIn.add(   String.valueOf(rndFX) + " " +
-                    String.valueOf(rndFY) + " " +
-                    String.valueOf(rndFZ) + fakeColorIntensity);
+                            String.valueOf(rndFY) + " " +
+                            String.valueOf(rndFZ) + (fileType==1 ? RANDOM_FILE_FAKE_PROPERTIES_1 : RANDOM_FILE_FAKE_PROPERTIES_2));
         }
 
-        System.out.println("path: " + inFile.getParent());
+        fileName = fileType==1 ? "rnd1.txt" : "rnd2.txt";
+        File rnd1 = new File(filePath + File.separator + fileName);
+        Path rnd1_out = Paths.get(rnd1.toURI());
 
-        File randomFile = new File(inFile.getParent() + File.separator + "random.txt");
-
-        Path randomOut = Paths.get(randomFile.toURI());
         try {
-            if(!Files.exists(randomOut))
-                Files.createFile(randomOut);
-            Files.write(randomOut, randomIn);
+            if(!Files.exists(rnd1_out))
+                Files.createFile(rnd1_out);
+            Files.write(rnd1_out, randomIn);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        printElapsedTime(start, "..random cloud generated and written");
+        printElapsedTime(start, "..random cloud generated and written in " + fileName);
     }
 
-    public static String convertSecondsToHMmSs(long seconds) {
+    private static String convertSecondsToHMmSs(long seconds) {
         long s = seconds % 60;
         long m = (seconds / 60) % 60;
         long h = (seconds / (60 * 60)) % 24;
         return String.format("%dh:%02dm:%02ds", h,m,s);
     }
 
-    public void printElapsedTime(long start, String message){
+    private void printElapsedTime(long start, String message){
         time = (System.currentTimeMillis() - start) / 1000;
         System.out.println(message + " (" + convertSecondsToHMmSs(time) + ")");
     }

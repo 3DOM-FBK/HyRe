@@ -12,6 +12,7 @@ public class Point extends Vector3f {
     @Setter @Getter private int b;
 
     @Getter @Setter private float intensity;
+    @Getter @Setter private int type;
 
 
     public Point(Vector3f v){
@@ -24,6 +25,12 @@ public class Point extends Vector3f {
     }
 
     public Point(float x, float y, float z, int r, int g, int b) {
+        super.x = x; super.y = y; super.z = z;
+        this.r = r; this.g = g; this.b = b;
+    }
+
+    public Point(int type, float x, float y, float z, int r, int g, int b) {
+        this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
     }
