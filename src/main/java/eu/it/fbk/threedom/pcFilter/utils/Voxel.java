@@ -12,5 +12,7 @@ public class Voxel {
 
     public Voxel(int id){
         this.id = id;
+        head = null;
+        tail = null;
     }
 }

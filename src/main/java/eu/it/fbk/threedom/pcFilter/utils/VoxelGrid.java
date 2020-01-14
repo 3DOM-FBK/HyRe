@@ -12,7 +12,7 @@ public class VoxelGrid {
     private BBox bbox;
     private float voxelSide;
     private int width, height, depth;
-
+    @Getter @Setter private int size;
     @Getter @Setter private Voxel[] voxels;
 
 
@@ -28,8 +28,9 @@ public class VoxelGrid {
         voxels = new Voxel[getNumVoxels()];
     }
 
-    public int getNumVoxels(){
-        return width * height * depth;
+    private int getNumVoxels(){
+        this.size = width * height * depth;
+        return size;
     }
 
     public int id(int x, int y, int z) {
@@ -42,8 +43,8 @@ public class VoxelGrid {
         int yv = (int) ((y - bbox.getMin().y) /voxelSide);
         int zv = (int) ((z - bbox.getMin().z) /voxelSide);
         int key = id(xv, yv, zv);
-        System.out.println("key: " + key);
-        if (key < 0 || key >= getNumVoxels()) return -1;
+        //System.out.println("key: " + key);
+        if (key < 0 || key >= size) return -1;
 
         return key;
     }
@@ -53,10 +54,18 @@ public class VoxelGrid {
         int yv = (int) ((y - bbox.getMin().y) /voxelSide);
         int zv = (int) ((z - bbox.getMin().z) /voxelSide);
         int key = id(xv, yv, zv);
-        System.out.println("key: " + key);
-        if (key < 0 || key >= getNumVoxels()) return null;
+        //System.out.println("key: " + key);
+        if (key < 0 || key >= size) return null;
 
         return voxels[key];
+    }
+
+    public Voxel getVoxel(int key) {
+        return voxels[key];
+    }
+
+    public Voxel setVoxel(int key, Voxel v) {
+        return voxels[key] = v;
     }
 
     public static void main(String[] args){

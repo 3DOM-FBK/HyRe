@@ -42,7 +42,7 @@ public class BBox {
     }
 
     public String toString(){
-        return "bbox(\n\t" + min.toString() + "\n\t" + max.toString() + "\n)";
+        return "[ " + min.toString() + ", " + max.toString() + " ]";
     }
 
     // Extends the boundaries with a new point
