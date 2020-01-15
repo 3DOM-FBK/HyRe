@@ -24,3 +24,46 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.vecmath/vecmath
     compile group: 'javax.vecmath', name: 'vecmath', version: '1.5.2'
 }
+
+
+project.ext.mainClassName = "eu.fbk.threedom.pcFilter.Main"
+
+//////////////////////////
+// maia JAR CREATION
+task distPcFilter(type: Jar, dependsOn: classes){
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from {configurations.compile.collect {zipTree(it)}}
+
+    exclude '*.txt'
+
+    manifest {
+        attributes(
+                'Main-Class': project.mainClassName,
+                //"SplashScreen-Image": "splash.png",
+
+                "Implementation-Title": "eu.fbk.threedom.pcFilter.Main",
+                "Implementation-Version": version,
+                "Implementation-Vendor": "FBK"
+        )
+    }
+
+    baseName = 'pcFilter'
+
+    doLast {
+        // Create batch
+        File bat = new File(destinationDir, "pcFilter-${project.version}.bat")
+        destinationDir.mkdirs()
+        bat.write('java -jar -Xmx4G -Xms4G ' + archiveName) // + ' > output.log 2>&1')
+
+        // Create zip
+        task(zippcFilter, type: Zip){
+            from (['build/libs/']){
+                include("pcFilter-${project.version}.jar", "pcFilter-${project.version}.bat")
+            }
+            destinationDir file('build/dist/')
+
+            archiveName = "pcFilter-${project.version}.zip"
+        }.execute();
+    }
+}

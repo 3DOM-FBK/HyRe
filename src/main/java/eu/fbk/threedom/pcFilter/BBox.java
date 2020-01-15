@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter;
+package eu.fbk.threedom.pcFilter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,8 +14,13 @@ public class BBox {
     @Setter @Getter private Point min;
 
     public BBox(){
-        max = new Point(MIN_VALUE, MIN_VALUE, MIN_VALUE, 0,0,0);
-        min = new Point(MAX_VALUE, MAX_VALUE, MAX_VALUE, 0,0,0);
+        max = new Point(MIN_VALUE, MIN_VALUE, MIN_VALUE);
+        min = new Point(MAX_VALUE, MAX_VALUE, MAX_VALUE);
+    }
+
+    public BBox(Point min, Point max){
+        this.max = max;
+        this.min = min;
     }
 
     public Point center(){
@@ -37,12 +42,12 @@ public class BBox {
     }
 
     public void reset(){
-        max = new Point(MIN_VALUE, MIN_VALUE, MIN_VALUE, 0,0,0);
-        min = new Point(MAX_VALUE, MAX_VALUE, MAX_VALUE, 0,0,0);
+        max = new Point(MIN_VALUE, MIN_VALUE, MIN_VALUE);
+        min = new Point(MAX_VALUE, MAX_VALUE, MAX_VALUE);
     }
 
     public String toString(){
-        return "[ " + min.toString() + ", " + max.toString() + " ]";
+        return "bbox [ " + min.toString() + ", " + max.toString() + " ]";
     }
 
     // Extends the boundaries with a new point

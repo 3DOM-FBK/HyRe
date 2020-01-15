@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter.utils;
+package eu.fbk.threedom.pcFilter.utils;
 
 /*
 
@@ -67,7 +67,7 @@ public class LinkedList implements LinkedListInterface {
 
     @Override
     public String toString(){
-        StringBuilder sb = new StringBuilder("[ ");
+        StringBuilder sb = new StringBuilder("llist [ ");
 
         LlNode n = head;
         if(head == null) sb.append("]");

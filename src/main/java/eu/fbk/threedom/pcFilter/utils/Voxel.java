@@ -1,6 +1,4 @@
-package eu.it.fbk.threedom.pcFilter.utils;
-
-import eu.it.fbk.threedom.pcFilter.utils.LlNode;
+package eu.fbk.threedom.pcFilter.utils;
 import lombok.Getter;
 import lombok.Setter;
 

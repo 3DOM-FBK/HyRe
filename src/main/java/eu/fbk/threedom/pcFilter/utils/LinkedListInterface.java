@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter.utils;
+package eu.fbk.threedom.pcFilter.utils;
 
 public interface LinkedListInterface {
 

@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter;
+package eu.fbk.threedom.pcFilter;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter.utils;
+package eu.fbk.threedom.pcFilter.utils;
 
 public abstract class Node implements NodeInterface {
     private Object data;

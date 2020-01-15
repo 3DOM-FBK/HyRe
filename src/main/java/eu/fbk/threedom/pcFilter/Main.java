@@ -1,4 +1,4 @@
-package eu.it.fbk.threedom.pcFilter;
+package eu.fbk.threedom.pcFilter;
 
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
@@ -15,15 +15,16 @@ import java.util.Random;
 
 public class Main {
 
-    @Argument(index=0, required = true, metaVar = "First input file") File inFile1;
-    @Argument(index=1, required = true, metaVar = "Second input file") File inFile2;
-    @Argument(index=2, required = true, metaVar = "VoxelSide") Float voxelSide;
+    @Argument(index=0, required = true, metaVar = "file1") File inFile1;
+    @Argument(index=1, required = true, metaVar = "file2") File inFile2;
+    @Argument(index=2, required = true, metaVar = "voxelSide") Float voxelSide;
     @Option(name = "-o", aliases = { "--output" }, metaVar = "output") File outFile = new File("");
     @Option(name = "-w", aliases = { "--overwrite" }, metaVar = "overWrite") Boolean overWrite;
+    @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 10000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 1.0f;
+    private static final int RANDOM_POINTS_NUMBER = 100000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 8.0f;
     private static final String RANDOM_FILE_HEADER = "// X Y Z R G B FileType Intensity";
     private static final String RANDOM_FILE_FAKE_PROPERTIES_1 = " 0 255 0 1";
     private static final String RANDOM_FILE_FAKE_PROPERTIES_2 = " 0 0 255 1";
@@ -37,26 +38,30 @@ public class Main {
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
 
+        verbose = false;
+
         try {
             // parse the arguments.
             parser.parseArgument(args);
+
+            DEBUG = verbose;
 
         } catch( CmdLineException e ) {
             // if there's a problem in the command line,
             // you'll getQTB this exception. this will report
             // an error message.
             System.err.println(e.getMessage());
-            System.err.print("Usage: PointCloud Filter");
+            System.err.print("Usage: pcFilter");
             parser.printSingleLineUsage(System.err);
             System.err.println();
 
             // print the list of available options
             parser.printUsage(System.err);
             System.err.println();
-            //System.err.print("animation period set to 0 means no animation");
+            System.err.print("  voxelSide: the lenght of the voxel cube\n");
 
             // print option sample. This is useful some time
-            System.err.println("  Example: pcFilter "+parser.printExample(OptionHandlerFilter.ALL));
+            System.err.println("\nExample:\n\n  pcFilter f1.txt f2.txt -v" + parser.printExample(OptionHandlerFilter.ALL));
             System.exit(1);
         }
     }
@@ -66,7 +71,12 @@ public class Main {
         // create an output file
         ///////////////////////////////////////////////////////
         filePath = FilenameUtils.getFullPath(inFile1.getPath());
+
+        if(filePath.isEmpty())
+            filePath = new File(Main.class.getProtectionDomain().getCodeSource().getLocation()
+                    .toURI()).getParentFile().getPath();
         System.out.println("filePath: " + filePath);
+
         fn1 = FilenameUtils.getBaseName(inFile1.getPath()); //System.out.println("fn1: " + fn1);
         fn2 = FilenameUtils.getBaseName(inFile2.getPath()); //System.out.println("fn2: " + fn2);
 
@@ -125,11 +135,12 @@ public class Main {
         ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
         Random rnd = new Random();
-        int i = rnd.nextInt(pcf.getNumVoxel());
+        int vGridSize = pcf.getVGrid().getSize();
+        int i = rnd.nextInt(vGridSize);
         ArrayList<Point> pointList = (ArrayList<Point>) pcf.getPoints(i);
 
         while (pointList == null) {
-            i = rnd.nextInt(pcf.getNumVoxel());
+            i = rnd.nextInt(vGridSize);
             pointList = (ArrayList<Point>) pcf.getPoints(i);
         }
 
