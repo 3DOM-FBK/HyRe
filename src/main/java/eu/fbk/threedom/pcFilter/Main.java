@@ -25,9 +25,10 @@ public class Main {
     public static boolean DEBUG;
     private static final int RANDOM_POINTS_NUMBER = 100000;
     private static final float RANDOM_POINTS_CUBE_SIZE = 8.0f;
-    private static final String RANDOM_FILE_HEADER = "// X Y Z R G B FileType Intensity";
-    private static final String RANDOM_FILE_FAKE_PROPERTIES_1 = " 0 255 0 1";
-    private static final String RANDOM_FILE_FAKE_PROPERTIES_2 = " 0 0 255 1";
+    private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Permeability";
+    private static final String RANDOM_FILE2_HEADER = "// X Y Z R G B Porosity";
+    private static final String RANDOM_FILE_FAKE_COL_1 = "0 255 0 1";
+    private static final String RANDOM_FILE_FAKE_COL_2 = "0 0 255 1";
 
     private static String filePath, fileName, fn1, fn2;
 
@@ -126,8 +127,8 @@ public class Main {
         PcFilter pcf = new PcFilter(file1Data, file2Data, voxelSide);
         printElapsedTime(start, "..voxel grid created");
 
-        if (Main.DEBUG)
-            System.out.println("\n" + pcf.toString());
+//        if (Main.DEBUG)
+//            System.out.println("\n" + pcf.toString());
 
 
         ///////////////////////////////////////////////////////
@@ -156,19 +157,20 @@ public class Main {
         // convert char array to list of strings
         List<String> dataOut = new ArrayList<>();
 
-        start = System.currentTimeMillis();
-        dataOut.add(RANDOM_FILE_HEADER);
-        dataOut.add("// filter voxel " + i);
-        for(Point p : pointList){
-            StringBuilder line = new StringBuilder();
-            line.append(p.x + " " + p.y + " " + p.z + " ");
-            line.append("255 0 0 " + p.getType() + " " + p.getIntensity());
-
-            dataOut.add(line.toString());
-        }
-
-        Files.write(out, dataOut);
-        printElapsedTime(start, "..output written");
+        // TODO: separate output file in two files
+//        start = System.currentTimeMillis();
+//        dataOut.add(fileType == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER + " FileType");
+//        dataOut.add("// filter voxel " + i);
+//        for(Point p : pointList){
+//            StringBuilder line = new StringBuilder();
+//            line.append(p.x + " " + p.y + " " + p.z + " ");
+//            line.append("255 0 0 " + p.getIntensity() + " " + p.getType() );
+//
+//            dataOut.add(line.toString());
+//        }
+//
+//        Files.write(out, dataOut);
+//        printElapsedTime(start, "..output written");
     }
 
     private void generateRandomData(int numberOfPoints, int fileType){
@@ -179,7 +181,7 @@ public class Main {
         Random rn = new Random();
 
         // generate first random file
-        randomIn.add(RANDOM_FILE_HEADER);
+        randomIn.add(fileType == 1 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
             float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
             float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
@@ -187,7 +189,8 @@ public class Main {
 
             randomIn.add(   String.valueOf(rndFX) + " " +
                             String.valueOf(rndFY) + " " +
-                            String.valueOf(rndFZ) + (fileType==1 ? RANDOM_FILE_FAKE_PROPERTIES_1 : RANDOM_FILE_FAKE_PROPERTIES_2));
+                            String.valueOf(rndFZ) + (fileType==1 ? RANDOM_FILE_FAKE_COL_1 : RANDOM_FILE_FAKE_COL_2) + " " +
+                            String.valueOf(rn.nextFloat()) );
         }
 
         fileName = fileType==1 ? "rnd1.txt" : "rnd2.txt";
