@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.vecmath.Vector3f;
+import java.util.HashMap;
 
 public class Point extends Vector3f {
 
@@ -14,6 +15,7 @@ public class Point extends Vector3f {
     @Getter @Setter private float intensity;
     @Getter @Setter private int type;
 
+    private HashMap<String, Float> propsDictionary;
 
     public Point(Vector3f v){
         super.x = v.x; super.y = v.y; super.z = v.z;
@@ -33,6 +35,8 @@ public class Point extends Vector3f {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
+
+        propsDictionary = new HashMap<>();
     }
 
     public String toString(){
@@ -44,6 +48,14 @@ public class Point extends Vector3f {
             return "point(" + x + ", " + y + ", " + z + "), rgb " + r + ":"+ g + ":" + b;
 
         return toString();
+    }
+
+    public void setProp(String property, Float value){
+        propsDictionary.put(property, value);
+    }
+
+    public float getProp(String property){
+        return propsDictionary.get(property);
     }
 
     public float length(Point p){

@@ -150,7 +150,6 @@ public class Main {
             System.out.println("\nvoxel (" + i + ")\n\t" + pointList);
 
 
-
         ///////////////////////////////////////////////////////
         // write output file
         ///////////////////////////////////////////////////////

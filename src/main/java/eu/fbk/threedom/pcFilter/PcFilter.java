@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class PcFilter {
@@ -20,7 +21,8 @@ public class PcFilter {
     private BBox bbox;
     private LinkedList points;
 
-    private String[] header;
+    private String[][] header, properties;
+    private HashMap<String, Float> propsStats;
 
     public PcFilter(List<String> file1Data, List<String> file2Data, float voxelSide) {
         this.file1Data = file1Data;
@@ -29,26 +31,34 @@ public class PcFilter {
 
         bbox = new BBox();
         points = new LinkedList();
-        this.header = new String[2];
+        this.header = new String[2][];
+        this.properties = new String[2][];
+        this.propsStats = new HashMap<>();
 
         // parse text files
-        if(Main.DEBUG)
-            System.out.println("\nparse file 1");
-        parseData(file1Data, 1);
-        if(Main.DEBUG)
-            System.out.println("..header " + this.header[0]);
+        parseData(file1Data, 0);
+        // head -> n -> .. -> n -> null
+        updateStatistics(0, null);
+        LlNode endNode = points.head();
 
-        if(Main.DEBUG)
-            System.out.println("\nparse file 2");
-        parseData(file2Data, 2);
-        if(Main.DEBUG)
-            System.out.println("..header " + this.header[1]) ;
+        parseData(file2Data, 1);
+        // head -> n -> .. -> n -> endNode -> n .. -> n -> null
+        updateStatistics(1, endNode);
+
+        if(Main.DEBUG) {
+            System.out.println("\nstatistics");
+            propsStats.entrySet().forEach(entry->{
+                System.out.println(".." + entry.getKey() + " " + entry.getValue());
+            });
+        }
 
         // instantiate the voxel grid
         vGrid = new VoxelGrid(points, bbox, this.voxelSide);
     }
 
     public void parseData(List<String> data, int fileType){
+        if(Main.DEBUG)
+            System.out.println("\nparse file " + fileType);
 
         ///////////////////////////////////////////////
         // parse header if present (first row)
@@ -62,8 +72,23 @@ public class PcFilter {
         else line = "";
 
         String[] token = line.split(" ");
-        this.header[fileType - 1] = Arrays.toString(token);
+        // arrays of properties names
+        String[] props = Arrays.copyOfRange(token, 6, token.length); // cut x y z r g b
+        this.header[fileType] = token;
+        this.properties[fileType] = props;
 
+        if(Main.DEBUG) {
+            System.out.println("..header " + Arrays.toString(header[fileType]));
+//            System.out.println("..properties " + this.properties[fileType]);
+        }
+
+        // initialize statistics
+        for(String prop : props){
+            propsStats.put(prop+"_N", 0f);
+            propsStats.put(prop+"_sum", 0f);
+            propsStats.put(prop+"_mean", 0f);
+            propsStats.put(prop+"_std", 0f);
+        }
 
         ///////////////////////////////////////////////
         // parse all data
@@ -73,16 +98,27 @@ public class PcFilter {
             if(data.get(i+1).startsWith("//") || data.get(i+1).isEmpty()) continue;
 
             token = data.get(i+1).split(" ");
-            float x, y, z, intensity;
+            float x, y, z;
             int r, g, b;
-//            if(Main.DEBUG)
-//                for (int j = 0; j < token.length; j++)
-//                    System.out.print(token[j] + " " + ( (j == token.length-1) ? "\n" : "")) ;
 
             x = Float.parseFloat(token[0]); y = Float.parseFloat(token[1]); z = Float.parseFloat(token[2]);
             r = Integer.parseInt(token[3]); g = Integer.parseInt(token[4]); b = Integer.parseInt(token[5]);
+
             Point p = new Point(fileType, x, y, z, r, g, b);
-            p.setIntensity(Float.parseFloat(token[6]));
+
+            // for each property
+            for(int t=6; t < header[fileType].length; t++) {
+                // add the new value
+                String prop = header[fileType][t];
+                float val = Float.parseFloat(token[t]);
+                p.setProp(prop, val); //System.out.println(prop + " " + val);
+
+                // update sum and arithmetic mean
+                propsStats.put(prop+"_N", propsStats.get(prop+"_N") + 1);
+                propsStats.put(prop+"_sum", propsStats.get(prop+"_sum") + val);
+                propsStats.put(prop+"_mean", propsStats.get(prop+"_sum") / propsStats.get(prop+"_N") );
+            }
+
             points.addAtBeginning(p);
 
             // update bounding box with the new point
@@ -95,45 +131,46 @@ public class PcFilter {
         }
     }
 
-//    public void generatVoxels(){
-//
-//        // instantiate the voxel grid
-//        vGrid = new VoxelGrid(bbox, this.voxelSide);
-//        numVoxel = vGrid.getSize();
-//
-//        if(Main.DEBUG)
-//            System.out.println("\nbuild Voxels (" + numVoxel + ")");
-//
-//        ///////////////////////////////////////////////////////
-//        // iterate on the linked list and update/create voxels
-//        ///////////////////////////////////////////////////////
-//        LlNode n = ll.head();
+    public void updateStatistics(int fileType, LlNode exitNode){
+        LlNode n = points.head();
+        int N = 0;
+        String[] props = this.properties[fileType];
+
+        // cycle on points
+        while(n != null) {
+            N++;
+            Point p = (Point)n.value();
+
+            // for each property
+            for(String prop : props) {
+                float val = p.getProp(prop);
+                float mean = propsStats.get(prop+"_mean");
+                float std =  (float)Math.pow(val - mean, 2);
+                propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
+            }
+
+            // exit condition
+            if(!n.hasNext() || n.next() == exitNode) break;
+            n = n.next();
+        }
+
+        // evaluate the standard deviation
+        for(String prop : props)
+            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / N));
+
+        // TODO: normalize each property value according to std & mean
+//        // cycle on points
 //        while(n != null) {
+//            N++;
 //            Point p = (Point)n.value();
-////            if(Main.DEBUG) System.out.println("\t" + n.toString());
 //
-//            int id = vGrid.getVoxelId(p.x, p.y, p.z);
-////            if(Main.DEBUG) System.out.println("\t" + ".. goes in voxel " + id);
-//
-//            if(id >= 0 && id < vGrid.getSize()) {
-//                if(vGrid.getVoxel(id) == null) {
-////                    if(Main.DEBUG) System.out.println("\t.. create voxel " + id);
-//                    Voxel vox = new Voxel(id);
-//                    vox.setHead(n); vox.setTail(n);
-//                    vGrid.setVoxel(id, vox);
-//                } else
-//                    vGrid.getVoxel(id).getTail().setNext(n);
-//
-//                vGrid.getVoxel(id).setTail(n);
-//            }
-//
-//            if(!n.hasNext()) break;
-//            n = n.next();
-//        }
-//    }
+//            // for each property
+//            for(String prop : props) {
+
+    }
+
 
     public List<Point> getPoints(int voxelId){
-//        if(Main.DEBUG) System.out.println("\nget voxels (" + id + ")");
         List<Point> list = new ArrayList<>();
         Voxel vox = vGrid.getVoxel(voxelId);
 
