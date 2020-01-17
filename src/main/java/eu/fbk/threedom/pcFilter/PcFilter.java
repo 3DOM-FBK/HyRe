@@ -111,7 +111,7 @@ public class PcFilter {
                 // add the new value
                 String prop = header[fileType][t];
                 float val = Float.parseFloat(token[t]);
-                p.setProp(prop, val); //System.out.println(prop + " " + val);
+                p.setProp(prop, val); System.out.println(prop + " " + val);
 
                 // update sum and arithmetic mean
                 propsStats.put(prop+"_N", propsStats.get(prop+"_N") + 1);
@@ -154,19 +154,35 @@ public class PcFilter {
             n = n.next();
         }
 
-        // evaluate the standard deviation
-        for(String prop : props)
-            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / N));
+//        // evaluate the standard deviation
+//        for(String prop : props)
+//            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / N));
 
         // TODO: normalize each property value according to std & mean
 //        // cycle on points
-//        while(n != null) {
-//            N++;
-//            Point p = (Point)n.value();
-//
-//            // for each property
-//            for(String prop : props) {
+        while(n != null) {
+            N++;
+            Point p = (Point) n.value();
 
+            // for each property
+            for (String prop : props) {
+                float val = p.getProp(prop);
+
+                // evaluate the standard deviation
+                float std = (float)Math.sqrt(propsStats.get(prop+"_std") / N);
+                propsStats.put(prop+"_std", std);
+
+                // normalize value between 0 and 1
+                float x = (2 * (val - propsStats.get(prop+"_mean"))) / std;
+                float new_val = 1 / (1 + (float)Math.exp(-x));
+                p.setProp(prop, new_val);
+                System.out.println(val + " : " + new_val + " ");
+            }
+
+            // exit condition
+            if(!n.hasNext() || n.next() == exitNode) break;
+            n = n.next();
+        }
     }
 
 
