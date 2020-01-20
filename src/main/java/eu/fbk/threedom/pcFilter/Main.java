@@ -23,12 +23,10 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 100000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 8.0f;
-    private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Permeability";
-    private static final String RANDOM_FILE2_HEADER = "// X Y Z R G B Porosity";
-    private static final String RANDOM_FILE_FAKE_COL_1 = "0 255 0 1";
-    private static final String RANDOM_FILE_FAKE_COL_2 = "0 0 255 1";
+    private static final int RANDOM_POINTS_NUMBER = 10;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 2.0f;
+    private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class Permeability";
+    private static final String RANDOM_FILE2_HEADER = "// X Y Z Class Porosity";
 
     private static String filePath, fileName, fn1, fn2;
 
@@ -104,8 +102,8 @@ public class Main {
         // use the random function to generate random points
         ///////////////////////////////////////////////////////
         if ((fn1.toString() + fn2.toString()).equals("rnd1rnd2")) {
+            generateRandomData(RANDOM_POINTS_NUMBER, 0);
             generateRandomData(RANDOM_POINTS_NUMBER, 1);
-            generateRandomData(RANDOM_POINTS_NUMBER, 2);
         }
 
 
@@ -127,28 +125,44 @@ public class Main {
         PcFilter pcf = new PcFilter(file1Data, file2Data, voxelSide);
         printElapsedTime(start, "..voxel grid created");
 
-//        if (Main.DEBUG)
-//            System.out.println("\n" + pcf.toString());
-
 
         ///////////////////////////////////////////////////////
         // pick a random voxel to filter
         ///////////////////////////////////////////////////////
-        start = System.currentTimeMillis();
         Random rnd = new Random();
         int vGridSize = pcf.getVGrid().getSize();
         int i = rnd.nextInt(vGridSize);
-        ArrayList<Point> pointList = (ArrayList<Point>) pcf.getPoints(i);
 
-        while (pointList == null) {
-            i = rnd.nextInt(vGridSize);
-            pointList = (ArrayList<Point>) pcf.getPoints(i);
-        }
+        ///////////////////////////////////////////////////////
+        // show data
+        ///////////////////////////////////////////////////////
+        ArrayList<Point> pointList, pointList0, pointList1, pointList2;
 
-        printElapsedTime(start, "..voxel points retrieved");
+        pointList = (ArrayList<Point>) pcf.getPoints(0, i);
 
-        if (Main.DEBUG)
-            System.out.println("\nvoxel (" + i + ")\n\t" + pointList);
+        System.out.println("\npick random voxel -> " + i + "\n..photogrammetric points " + pointList);
+
+        pointList0 = (ArrayList<Point>) pcf.getPoints(0, i, 0);
+        pointList1 = (ArrayList<Point>) pcf.getPoints(0, i, 1);
+        pointList2 = (ArrayList<Point>) pcf.getPoints(0, i, 2);
+
+        System.out.println("....of which roofs points density: " + pointList0.size());
+        System.out.println("....of which facades points density: " + pointList1.size());
+        System.out.println("....of which streets points density: " + pointList2.size());
+
+
+        pointList = (ArrayList<Point>) pcf.getPoints(1, i);
+
+        System.out.println("\n..lydar points " + pointList);
+
+        pointList0 = (ArrayList<Point>) pcf.getPoints(1, i, 0);
+        pointList1 = (ArrayList<Point>) pcf.getPoints(1, i, 1);
+        pointList2 = (ArrayList<Point>) pcf.getPoints(1, i, 2);
+
+        System.out.println("....of which roofs points density: " + pointList0.size());
+        System.out.println("....of which facades points density: " + pointList1.size());
+        System.out.println("....of which streets points density: " + pointList2.size());
+
 
 
         ///////////////////////////////////////////////////////
@@ -173,27 +187,30 @@ public class Main {
 //        printElapsedTime(start, "..output written");
     }
 
-    private void generateRandomData(int numberOfPoints, int fileType){
+    private void generateRandomData(int numberOfPoints, int type){
         start = System.currentTimeMillis();
 
         List<String> randomIn = new ArrayList<>();
 
         Random rn = new Random();
 
-        // generate first random file
-        randomIn.add(fileType == 1 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
+        randomIn.add(type == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
             float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
             float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
             float rndFZ = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
 
+            int rndClassification = rn.nextInt(3);
+
             randomIn.add(   String.valueOf(rndFX) + " " +
                             String.valueOf(rndFY) + " " +
-                            String.valueOf(rndFZ) + (fileType==1 ? RANDOM_FILE_FAKE_COL_1 : RANDOM_FILE_FAKE_COL_2) + " " +
+                            String.valueOf(rndFZ) + " " +
+                            (type==0 ? "0 255 0 " : "") +
+                            String.valueOf(rndClassification) + " " +
                             String.valueOf(rn.nextFloat()) );
         }
 
-        fileName = fileType==1 ? "rnd1.txt" : "rnd2.txt";
+        fileName = type==0 ? "rnd1.txt" : "rnd2.txt";
         File rnd1 = new File(filePath + File.separator + fileName);
         Path rnd1_out = Paths.get(rnd1.toURI());
 

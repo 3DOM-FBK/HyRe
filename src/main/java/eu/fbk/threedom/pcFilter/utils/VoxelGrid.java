@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.vecmath.Vector3f;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class VoxelGrid {
 
@@ -16,6 +19,9 @@ public class VoxelGrid {
     private LinkedList points;
     @Getter @Setter private int size;
     @Getter @Setter private Voxel[] voxels;
+
+    private boolean[] voxelsRoof;
+    private @Getter @Setter List<Integer> voxelsRoofList;
 
 
     public VoxelGrid(LinkedList points, BBox bbox, float voxelSide){
@@ -29,15 +35,20 @@ public class VoxelGrid {
         depth = (int) (bbSize.z / voxelSide + 1);
 
         this.size = width * height * depth;
-
         voxels = new Voxel[this.size];
 
-        generatVoxels();
+
+        // fallo anche per gli altri due tipi in maniera parametrica
+        voxelsRoof = new boolean[size];
+        voxelsRoofList = new ArrayList<>();
+
+        generateVoxels();
     }
 
-    public void generatVoxels(){
+    public void generateVoxels(){
         if(Main.DEBUG)
-            System.out.println("\ngenerate Voxels (" + size + ")");
+            System.out.println("\ngenerate Voxels\n..voxelSide: " + voxelSide
+                    + "\n..dimension is " + width + "x" + height + "x" + depth);
 
         ///////////////////////////////////////////////////////
         // iterate on the linked list and update/create voxels
@@ -47,7 +58,20 @@ public class VoxelGrid {
             Point p = (Point)n.value();
 //            if(Main.DEBUG) System.out.println("\t" + n.toString());
 
+            // TODO: add voxelId to the classificationContainer
+            //p.getClassification()
+
             int id = getVoxelId(p.x, p.y, p.z);
+
+
+            // se non ho gia' messo l'id del voxel nella lista dei voxel per la classe roof aggiungi
+            if(!voxelsRoof[id])
+                voxelsRoofList.add(id);
+
+            // segna al posto idesimo che ho inserito l'id
+            voxelsRoof[id] = true;
+
+
 //            if(Main.DEBUG) System.out.println("\t" + ".. goes in voxel " + id);
 
             if(id >= 0 && id < this.size) {

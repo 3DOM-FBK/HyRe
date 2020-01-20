@@ -13,22 +13,24 @@ public class Point extends Vector3f {
     @Setter @Getter private int b;
 
     @Getter @Setter private float intensity;
-    @Getter @Setter private int type;
+    @Getter @Setter private int type; // 0 photogrammetric, 1 lydar
+    @Getter @Setter private int classification; // 0 1 2
 
     private HashMap<String, Float> propsDictionary;
-
-    public Point(Vector3f v){
-        super.x = v.x; super.y = v.y; super.z = v.z;
-    }
 
     public Point(float x, float y, float z) {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
+
+        propsDictionary = new HashMap<>();
     }
 
-    public Point(float x, float y, float z, int r, int g, int b) {
+    public Point(int type,  float x, float y, float z) {
+        this.type = type;
         super.x = x; super.y = y; super.z = z;
-        this.r = r; this.g = g; this.b = b;
+        this.r = 0; this.g = 0; this.b = 0;
+
+        propsDictionary = new HashMap<>();
     }
 
     public Point(int type, float x, float y, float z, int r, int g, int b) {

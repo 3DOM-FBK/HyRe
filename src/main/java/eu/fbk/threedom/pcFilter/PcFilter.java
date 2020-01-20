@@ -64,6 +64,7 @@ public class PcFilter {
         // parse header if present (first row)
         ///////////////////////////////////////////////////////
         String line = data.get(0);
+        int classification;
 
         if(line.startsWith("// "))
             line = line.replace("// ",  "");
@@ -73,13 +74,18 @@ public class PcFilter {
 
         String[] token = line.split(" ");
         // arrays of properties names
-        String[] props = Arrays.copyOfRange(token, 6, token.length); // cut x y z r g b
+        String[] props;
+        if(fileType == 0) // photogrammetric file
+            props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
+        else
+            props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
+
         this.header[fileType] = token;
         this.properties[fileType] = props;
 
         if(Main.DEBUG) {
             System.out.println("..header " + Arrays.toString(header[fileType]));
-//            System.out.println("..properties " + this.properties[fileType]);
+            System.out.println("..properties " + Arrays.toString(properties[fileType]));
         }
 
         // initialize statistics
@@ -98,20 +104,31 @@ public class PcFilter {
             if(data.get(i+1).startsWith("//") || data.get(i+1).isEmpty()) continue;
 
             token = data.get(i+1).split(" ");
-            float x, y, z;
-            int r, g, b;
 
-            x = Float.parseFloat(token[0]); y = Float.parseFloat(token[1]); z = Float.parseFloat(token[2]);
-            r = Integer.parseInt(token[3]); g = Integer.parseInt(token[4]); b = Integer.parseInt(token[5]);
+            int shift;
+            Point p;
 
-            Point p = new Point(fileType, x, y, z, r, g, b);
+            // X Y Z R G B Class
+            if(fileType == 0) {
+                p = new Point(fileType, Float.parseFloat(token[0]), Float.parseFloat(token[1]), Float.parseFloat(token[2]),
+                        Integer.parseInt(token[3]), Integer.parseInt(token[4]), Integer.parseInt(token[5]));
+                p.setClassification(Integer.parseInt(token[6]));
+                shift = 7;
+            // X Y Z Class
+            }else{
+                p = new Point(fileType, Float.parseFloat(token[0]), Float.parseFloat(token[1]), Float.parseFloat(token[2]));
+                p.setClassification(Integer.parseInt(token[3]));
+                shift = 4;
+            }
+
 
             // for each property
-            for(int t=6; t < header[fileType].length; t++) {
+            for(int t=shift; t < header[fileType].length; t++) {
                 // add the new value
                 String prop = header[fileType][t];
                 float val = Float.parseFloat(token[t]);
-                p.setProp(prop, val); System.out.println(prop + " " + val);
+                p.setProp(prop, val);
+                //System.out.println(prop + " " + val);
 
                 // update sum and arithmetic mean
                 propsStats.put(prop+"_N", propsStats.get(prop+"_N") + 1);
@@ -133,19 +150,21 @@ public class PcFilter {
 
     public void updateStatistics(int fileType, LlNode exitNode){
         LlNode n = points.head();
-        int N = 0;
+        //int N = 0;
         String[] props = this.properties[fileType];
 
-        // cycle on points
+        ///////////////////////////////////////////////
+        // evaluate standard deviation
+        ///////////////////////////////////////////////////////
+        // cycle on all points
         while(n != null) {
-            N++;
             Point p = (Point)n.value();
 
             // for each property
             for(String prop : props) {
                 float val = p.getProp(prop);
                 float mean = propsStats.get(prop+"_mean");
-                float std =  (float)Math.pow(val - mean, 2);
+                float std =  (float)Math.pow((val - mean), 2);
                 propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
             }
 
@@ -154,29 +173,28 @@ public class PcFilter {
             n = n.next();
         }
 
-//        // evaluate the standard deviation
-//        for(String prop : props)
-//            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / N));
+        // evaluate the standard deviation for each property
+        for(String prop : props)
+            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / propsStats.get(prop+"_N")));
 
-        // TODO: normalize each property value according to std & mean
-//        // cycle on points
+
+        ///////////////////////////////////////////////
+        // normalize all properties values
+        ///////////////////////////////////////////////////////
+        // cycle on points
+        n = points.head();
         while(n != null) {
-            N++;
             Point p = (Point) n.value();
 
             // for each property
             for (String prop : props) {
                 float val = p.getProp(prop);
 
-                // evaluate the standard deviation
-                float std = (float)Math.sqrt(propsStats.get(prop+"_std") / N);
-                propsStats.put(prop+"_std", std);
-
-                // normalize value between 0 and 1
-                float x = (2 * (val - propsStats.get(prop+"_mean"))) / std;
-                float new_val = 1 / (1 + (float)Math.exp(-x));
-                p.setProp(prop, new_val);
-                System.out.println(val + " : " + new_val + " ");
+                // normalize values between 0 and 1
+                float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
+                float norm_val = 1 / (1 + (float)Math.exp(-x));
+                p.setProp(prop, norm_val);
+                System.out.println("...." + prop + ": " + val + " -> " + norm_val);
             }
 
             // exit condition
@@ -186,7 +204,13 @@ public class PcFilter {
     }
 
 
-    public List<Point> getPoints(int voxelId){
+    /**
+     *
+     * @param type defines if it is a photogrammetric point (0) or a lydar point
+     * @param voxelId
+     * @return
+     */
+    public List<Point> getPoints(int type, int voxelId){
         List<Point> list = new ArrayList<>();
         Voxel vox = vGrid.getVoxel(voxelId);
 
@@ -196,7 +220,29 @@ public class PcFilter {
         LlNode n = vox.getHead();
         while(n != null) {
             Point p = (Point)n.value();
-            list.add(p);
+            if(p.getType() == type)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
+    public List<Point> getPoints(int type, int voxelId, int classification){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = vGrid.getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == type && p.getClassification() == classification)
+                list.add(p);
 
             // exit condition
             if(!n.hasNext() || n == vox.getTail()) break;
