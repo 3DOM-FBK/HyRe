@@ -12,9 +12,9 @@ public class Point extends Vector3f {
     @Setter @Getter private int g;
     @Setter @Getter private int b;
 
-    @Getter @Setter private float intensity;
-    @Getter @Setter private int type; // 0 photogrammetric, 1 lydar
-    @Getter @Setter private int classification; // 0 1 2
+    //@Getter @Setter private float intensity;
+    @Getter @Setter private FileType type; // 0 photogrammetric, 1 lydar
+    @Getter @Setter private PointClassification classification; // 0 1 2
 
     private HashMap<String, Float> propsDictionary;
 
@@ -25,7 +25,7 @@ public class Point extends Vector3f {
         propsDictionary = new HashMap<>();
     }
 
-    public Point(int type,  float x, float y, float z) {
+    public Point(FileType type,  float x, float y, float z) {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
@@ -33,7 +33,7 @@ public class Point extends Vector3f {
         propsDictionary = new HashMap<>();
     }
 
-    public Point(int type, float x, float y, float z, int r, int g, int b) {
+    public Point(FileType type, float x, float y, float z, int r, int g, int b) {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
@@ -82,10 +82,10 @@ public class Point extends Vector3f {
 
     public static void main(String[] args){
         Point p = new Point(1, 2, 3);
-        p.setIntensity(666.0f);
+        p.setProp("intensity", 666.0f);
 
         System.out.println(p.toString());
-        System.out.println("\tintensity: " + p.getIntensity());
+        System.out.println("\tintensity: " + p.getProp("intensity"));
 
         Point p1 = new Point(1, 1, 1);
         Point p2 = new Point(2, 2, 2);

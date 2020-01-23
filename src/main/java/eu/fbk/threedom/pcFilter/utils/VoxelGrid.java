@@ -1,15 +1,11 @@
 package eu.fbk.threedom.pcFilter.utils;
 
-import eu.fbk.threedom.pcFilter.Main;
-import eu.fbk.threedom.pcFilter.BBox;
-import eu.fbk.threedom.pcFilter.Point;
+import eu.fbk.threedom.pcFilter.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.vecmath.Vector3f;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class VoxelGrid {
 
@@ -20,8 +16,7 @@ public class VoxelGrid {
     @Getter @Setter private int size;
     @Getter @Setter private Voxel[] voxels;
 
-    private boolean[] voxelsRoof;
-    private @Getter @Setter List<Integer> voxelsRoofList;
+    private List<Set<Integer>> voxelsList;
 
 
     public VoxelGrid(LinkedList points, BBox bbox, float voxelSide){
@@ -37,18 +32,18 @@ public class VoxelGrid {
         this.size = width * height * depth;
         voxels = new Voxel[this.size];
 
-
-        // fallo anche per gli altri due tipi in maniera parametrica
-        voxelsRoof = new boolean[size];
-        voxelsRoofList = new ArrayList<>();
+        voxelsList = new ArrayList();
+        for(int i = 0; i < PointClassification.values().length * 2; i++)
+            voxelsList.add(new HashSet<Integer>());
 
         generateVoxels();
     }
 
     public void generateVoxels(){
-        if(Main.DEBUG)
-            System.out.println("\ngenerate Voxels\n..voxelSide: " + voxelSide
-                    + "\n..dimension is " + width + "x" + height + "x" + depth);
+        System.out.println("\ngenerate voxel structure\n..voxelSide: " + voxelSide);
+        System.out.println("..voxelGrid dimension " + width + " x " + height + " x " + depth);
+        System.out.println("..voxels to generate " + size);
+
 
         ///////////////////////////////////////////////////////
         // iterate on the linked list and update/create voxels
@@ -56,34 +51,33 @@ public class VoxelGrid {
         LlNode n = points.head();
         while(n != null) {
             Point p = (Point)n.value();
-//            if(Main.DEBUG) System.out.println("\t" + n.toString());
-
-            // TODO: add voxelId to the classificationContainer
-            //p.getClassification()
-
             int id = getVoxelId(p.x, p.y, p.z);
 
+            if(id != -1) {
+                FileType fileType = p.getType();
 
-            // se non ho gia' messo l'id del voxel nella lista dei voxel per la classe roof aggiungi
-            if(!voxelsRoof[id])
-                voxelsRoofList.add(id);
+                switch (p.getClassification()) {
+                    case ROOF:
+                        if (fileType.type == 0) voxelsList.get(0).add(id); else voxelsList.get(3).add(id);
+                        break;
+                    case FACADE:
+                        if (fileType.type == 0) voxelsList.get(1).add(id); else voxelsList.get(4).add(id);
+                        break;
+                    case STREET:
+                        if (fileType.type == 0) voxelsList.get(2).add(id); else voxelsList.get(5).add(id);
+                        break;
+                }
 
-            // segna al posto idesimo che ho inserito l'id
-            voxelsRoof[id] = true;
+                if (id >= 0 && id < this.size) {
+                    if (getVoxel(id) == null) {
+                        Voxel vox = new Voxel(id);
+                        vox.setHead(n);
+                        vox.setTail(n);
+                        setVoxel(id, vox);
+                    } else getVoxel(id).getTail().setNext(n);
 
-
-//            if(Main.DEBUG) System.out.println("\t" + ".. goes in voxel " + id);
-
-            if(id >= 0 && id < this.size) {
-                if(getVoxel(id) == null) {
-//                    if(Main.DEBUG) System.out.println("\t.. create voxel " + id);
-                    Voxel vox = new Voxel(id);
-                    vox.setHead(n); vox.setTail(n);
-                    setVoxel(id, vox);
-                } else
-                    getVoxel(id).getTail().setNext(n);
-
-                getVoxel(id).setTail(n);
+                    getVoxel(id).setTail(n);
+                }
             }
 
             if(!n.hasNext()) break;
@@ -132,6 +126,88 @@ public class VoxelGrid {
 
     public Voxel setVoxel(int key, Voxel v) {
         return voxels[key] = v;
+    }
+
+    /**
+     *
+     * @param fileType defines if it is a photogrammetric point (0) or a lydar point
+     * @param voxelId
+     * @return
+     */
+    public List<Point> getPoints(FileType fileType, int voxelId){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType && p.getClassification() == pointType)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
+    public int getNumberOfPoint(FileType fileType, int voxelId, PointClassification pointType){
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return -1;
+
+        int count = 0;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType && p.getClassification() == pointType)
+                count++;
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return count;
+    }
+
+    public Set<Integer> getVoxels(FileType fileType, PointClassification pointType){
+        switch (pointType){
+            case ROOF:
+                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(0); else return voxelsList.get(3);
+            case FACADE:
+                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(1); else return voxelsList.get(4);
+            case STREET:
+                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(2); else return voxelsList.get(5);
+            default: return null;
+        }
     }
 
     public static void main(String[] args){

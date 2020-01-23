@@ -1,5 +1,6 @@
 package eu.fbk.threedom.pcFilter;
 
+import eu.fbk.threedom.pcFilter.utils.Stats;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
 
@@ -9,9 +10,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Main {
 
@@ -23,8 +22,8 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 10;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 2.0f;
+    private static final int RANDOM_POINTS_NUMBER = 100000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 10;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class Permeability";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class Porosity";
 
@@ -107,11 +106,17 @@ public class Main {
         }
 
 
+
         ///////////////////////////////////////////////////////
         // read all lines file 1 & 2
         ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
         Path path = Paths.get(inFile1.toURI());
+        //long lineCount = Files.lines(path).count();
+        //System.out.println("..lines " + lineCount);
+        //printElapsedTime(start, "..number of lines read");
+        //System.exit(0);
+
         List<String> file1Data = Files.readAllLines(path);
         path = Paths.get(inFile2.toURI());
         List<String> file2Data = Files.readAllLines(path);
@@ -119,7 +124,7 @@ public class Main {
 
 
         ///////////////////////////////////////////////////////
-        // filter the data
+        // create the structure
         ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
         PcFilter pcf = new PcFilter(file1Data, file2Data, voxelSide);
@@ -133,36 +138,127 @@ public class Main {
         int vGridSize = pcf.getVGrid().getSize();
         int i = rnd.nextInt(vGridSize);
 
+
         ///////////////////////////////////////////////////////
-        // show data
+        // postprocessing statistics
         ///////////////////////////////////////////////////////
-        ArrayList<Point> pointList, pointList0, pointList1, pointList2;
+        System.out.println("\n\nPOST-PROCESSING STATISTICS");
+        ArrayList<Point> pointList, pointListRoofs, pointListFacades, pointListStreets;
 
-        pointList = (ArrayList<Point>) pcf.getPoints(0, i);
+        for(FileType ft : FileType.values()){
+            start = System.currentTimeMillis();
+            System.out.println("\n" + ft.name() + " cloud");
+            for(PointClassification pc : PointClassification.values()){
 
-        System.out.println("\npick random voxel -> " + i + "\n..photogrammetric points " + pointList);
+                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
 
-        pointList0 = (ArrayList<Point>) pcf.getPoints(0, i, 0);
-        pointList1 = (ArrayList<Point>) pcf.getPoints(0, i, 1);
-        pointList2 = (ArrayList<Point>) pcf.getPoints(0, i, 2);
+                if(pointList != null) {
+                    System.out.println("..random voxel -> " + i);
+                    if (Main.DEBUG)
+                        System.out.println("...." + ft.name() + " points " + pointList);
+                    else
+                        System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
 
-        System.out.println("....of which roofs points density: " + pointList0.size());
-        System.out.println("....of which facades points density: " + pointList1.size());
-        System.out.println("....of which streets points density: " + pointList2.size());
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+                    System.out.println("......" + pc.name() + ": " + pointList.size());
+                }
+            }
+            printElapsedTime(start, "processed");
+        }
+
+        for(FileType ft : FileType.values()){
+            start = System.currentTimeMillis();
+            System.out.println("\n" + ft.name() + " cloud");
+            for(PointClassification pc : PointClassification.values()){
+                Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+                if(Main.DEBUG)
+                    System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
+                else
+                    System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
+
+                int numberOfPointsInVoxel_sum = 0;
+                for(int v : voxelSet) {
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+                    numberOfPointsInVoxel_sum += pointList.size();
+                    if(Main.DEBUG) {
+                        System.out.println("..voxel " + v);//+ " " + pointList);
+                        for (Point p : pointList) System.out.println("...." + p.toString());
+                    }
+                }
+                System.out.println("..mean of voxel point density " + (numberOfPointsInVoxel_sum / voxelSet.size()));
+            }
+            printElapsedTime(start, "processed");
+        }
 
 
-        pointList = (ArrayList<Point>) pcf.getPoints(1, i);
+        System.out.println("\nproperties statistics");
 
-        System.out.println("\n..lydar points " + pointList);
+//        String[][] props = {    {"Permeability"},
+//                                {"Porosity"}        };
 
-        pointList0 = (ArrayList<Point>) pcf.getPoints(1, i, 0);
-        pointList1 = (ArrayList<Point>) pcf.getPoints(1, i, 1);
-        pointList2 = (ArrayList<Point>) pcf.getPoints(1, i, 2);
+        String[][] props = pcf.getProperties();
 
-        System.out.println("....of which roofs points density: " + pointList0.size());
-        System.out.println("....of which facades points density: " + pointList1.size());
-        System.out.println("....of which streets points density: " + pointList2.size());
+        HashMap data = pcf.getDataHm();
 
+        start = System.currentTimeMillis();
+        for(int k=0; k < props.length; k++) {
+            String prop = props[k][0];
+
+            ArrayList propValues = (ArrayList<Float>) data.get(prop);
+            if(Main.DEBUG)
+                System.out.println(".." + prop + " values (normalized) " + propValues);
+            else
+                System.out.println(".." + prop + " values (normalized) " + propValues.size() + " values");
+
+            // transform arrayList to array
+            float[] values = new float[propValues.size()];
+            int n = 0;
+            for (Object p : propValues)
+                values[n++] = (float) p;
+
+            float med = Stats.median(values, values.length);
+            float mad = Stats.mad(values, values.length);
+            System.out.println("....med: " + med + "\n....mad: " + mad + "\n....sigmaM: " + (mad * 1.4826));
+        }
+        printElapsedTime(start, "processed");
+
+        for(FileType ft : FileType.values()) {
+            System.out.println("\n.." + ft.name());
+            start = System.currentTimeMillis();
+
+            for(int k=0; k < props[0].length; k++) {
+                String prop = props[ft.ordinal()][k];
+                System.out.println("...." + prop);
+
+                for (PointClassification pc : PointClassification.values()) {
+                    Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+
+                    // extract values from voxels
+                    ArrayList propValues = new ArrayList();
+                    for (int v : voxelSet) {
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+                        for (Point p : pointList)
+                            propValues.add(p.getProp(prop));
+                    }
+                    if(Main.DEBUG)
+                        System.out.println("......" + pc.name() + " (normalized) " + propValues);
+                    else
+                        System.out.println("......" + pc.name() + " (normalized) " + propValues.size() + " values");
+
+                    // transform arrayList to array
+                    float[] values = new float[propValues.size()];
+                    values = new float[propValues.size()];
+                    int n = 0;
+                    for (Object p : propValues)
+                        values[n++] = (float) p;
+
+                    float med = Stats.median(values, values.length);
+                    float mad = Stats.mad(values, values.length);
+                    System.out.println("........med: " + med + "\n........mad: " + mad + "\n........sigmaM: " + (mad * 1.4826));
+                }
+            }
+            printElapsedTime(start, "processed");
+        }
 
 
         ///////////////////////////////////////////////////////
@@ -197,7 +293,7 @@ public class Main {
         randomIn.add(type == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
             float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
-            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
+            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE / 15 - 0.0f);
             float rndFZ = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
 
             int rndClassification = rn.nextInt(3);

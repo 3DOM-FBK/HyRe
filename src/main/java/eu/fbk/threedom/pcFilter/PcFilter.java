@@ -21,8 +21,10 @@ public class PcFilter {
     private BBox bbox;
     private LinkedList points;
 
-    private String[][] header, properties;
+    private @Setter @Getter String[][] header, properties;
     private HashMap<String, Float> propsStats;
+
+    private @Setter @Getter HashMap<String, ArrayList<Float>> dataHm;
 
     public PcFilter(List<String> file1Data, List<String> file2Data, float voxelSide) {
         this.file1Data = file1Data;
@@ -32,33 +34,36 @@ public class PcFilter {
         bbox = new BBox();
         points = new LinkedList();
         this.header = new String[2][];
+
         this.properties = new String[2][];
         this.propsStats = new HashMap<>();
 
-        // parse text files
-        parseData(file1Data, 0);
+        this.dataHm = new HashMap<>();
+
+        //////////////////////////////
+        // parse PHOTOGRAMMETRIC file
+        parseData(file1Data, FileType.PHOTOGRAMMETRIC);
         // head -> n -> .. -> n -> null
         updateStatistics(0, null);
         LlNode endNode = points.head();
 
-        parseData(file2Data, 1);
+        //////////////////////////////
+        // parse LYDAR file
+        parseData(file2Data, FileType.LYDAR);
         // head -> n -> .. -> n -> endNode -> n .. -> n -> null
         updateStatistics(1, endNode);
 
-        if(Main.DEBUG) {
-            System.out.println("\nstatistics");
-            propsStats.entrySet().forEach(entry->{
-                System.out.println(".." + entry.getKey() + " " + entry.getValue());
-            });
-        }
+        System.out.println("\nruntime statistics");
+        propsStats.entrySet().forEach(entry->{
+            System.out.println(".." + entry.getKey() + " " + entry.getValue());
+        });
 
         // instantiate the voxel grid
         vGrid = new VoxelGrid(points, bbox, this.voxelSide);
     }
 
-    public void parseData(List<String> data, int fileType){
-        if(Main.DEBUG)
-            System.out.println("\nparse file " + fileType);
+    public void parseData(List<String> data, FileType fileType){
+        System.out.println("\nparse " + fileType + " file");
 
         ///////////////////////////////////////////////
         // parse header if present (first row)
@@ -75,25 +80,28 @@ public class PcFilter {
         String[] token = line.split(" ");
         // arrays of properties names
         String[] props;
-        if(fileType == 0) // photogrammetric file
+        if(fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
             props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
         else
             props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
 
-        this.header[fileType] = token;
-        this.properties[fileType] = props;
+        this.header[fileType.ordinal()] = token;
+        this.properties[fileType.ordinal()] = props;
 
         if(Main.DEBUG) {
-            System.out.println("..header " + Arrays.toString(header[fileType]));
-            System.out.println("..properties " + Arrays.toString(properties[fileType]));
+            System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
+            System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
         }
 
-        // initialize statistics
         for(String prop : props){
+            // initialize statistics
             propsStats.put(prop+"_N", 0f);
             propsStats.put(prop+"_sum", 0f);
             propsStats.put(prop+"_mean", 0f);
             propsStats.put(prop+"_std", 0f);
+
+            // initialize data hashmap
+            dataHm.put(prop, new ArrayList<Float>());
         }
 
         ///////////////////////////////////////////////
@@ -105,27 +113,37 @@ public class PcFilter {
 
             token = data.get(i+1).split(" ");
 
-            int shift;
-            Point p;
+            int shift = 0;
+            Point p = null;
 
             // X Y Z R G B Class
-            if(fileType == 0) {
-                p = new Point(fileType, Float.parseFloat(token[0]), Float.parseFloat(token[1]), Float.parseFloat(token[2]),
-                        Integer.parseInt(token[3]), Integer.parseInt(token[4]), Integer.parseInt(token[5]));
-                p.setClassification(Integer.parseInt(token[6]));
+            if(fileType == FileType.PHOTOGRAMMETRIC) {
+                p = new Point(
+                        fileType, Float.parseFloat(token[0]),
+                        Float.parseFloat(token[1]),
+                        Float.parseFloat(token[2]),
+                        Integer.parseInt(token[3]),
+                        Integer.parseInt(token[4]),
+                        Integer.parseInt(token[5]));
+                        p.setClassification(PointClassification.parse(Integer.parseInt(token[6])) );
                 shift = 7;
+
             // X Y Z Class
-            }else{
-                p = new Point(fileType, Float.parseFloat(token[0]), Float.parseFloat(token[1]), Float.parseFloat(token[2]));
-                p.setClassification(Integer.parseInt(token[3]));
+            }else if(fileType == FileType.LYDAR){
+                p = new Point(
+                        fileType,
+                        Float.parseFloat(token[0]),
+                        Float.parseFloat(token[1]),
+                        Float.parseFloat(token[2]));
+                        p.setClassification(PointClassification.parse(Integer.parseInt(token[3])) );
                 shift = 4;
             }
 
 
             // for each property
-            for(int t=shift; t < header[fileType].length; t++) {
+            for(int t = shift; t < header[fileType.ordinal()].length; t++) {
                 // add the new value
-                String prop = header[fileType][t];
+                String prop = header[fileType.ordinal()][t];
                 float val = Float.parseFloat(token[t]);
                 p.setProp(prop, val);
                 //System.out.println(prop + " " + val);
@@ -194,7 +212,14 @@ public class PcFilter {
                 float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
                 float norm_val = 1 / (1 + (float)Math.exp(-x));
                 p.setProp(prop, norm_val);
-                System.out.println("...." + prop + ": " + val + " -> " + norm_val);
+
+                // save the normalized value in the right arraylist
+                ArrayList al = dataHm.get(prop);
+                al.add(norm_val);
+                dataHm.put(prop, al);
+
+                if(Main.DEBUG)
+                    System.out.println("...." + prop + ": " + val + " -> " + norm_val);
             }
 
             // exit condition
@@ -206,50 +231,16 @@ public class PcFilter {
 
     /**
      *
-     * @param type defines if it is a photogrammetric point (0) or a lydar point
+     * @param fileType defines if it is a photogrammetric point (0) or 1 lydar point
      * @param voxelId
      * @return
      */
-    public List<Point> getPoints(int type, int voxelId){
-        List<Point> list = new ArrayList<>();
-        Voxel vox = vGrid.getVoxel(voxelId);
-
-        if(vox == null)
-            return null;
-
-        LlNode n = vox.getHead();
-        while(n != null) {
-            Point p = (Point)n.value();
-            if(p.getType() == type)
-                list.add(p);
-
-            // exit condition
-            if(!n.hasNext() || n == vox.getTail()) break;
-            n = n.next();
-        }
-
-        return list;
+    public List<Point> getPoints(FileType fileType, int voxelId){
+        return vGrid.getPoints(fileType, voxelId);
     }
 
-    public List<Point> getPoints(int type, int voxelId, int classification){
-        List<Point> list = new ArrayList<>();
-        Voxel vox = vGrid.getVoxel(voxelId);
-
-        if(vox == null)
-            return null;
-
-        LlNode n = vox.getHead();
-        while(n != null) {
-            Point p = (Point)n.value();
-            if(p.getType() == type && p.getClassification() == classification)
-                list.add(p);
-
-            // exit condition
-            if(!n.hasNext() || n == vox.getTail()) break;
-            n = n.next();
-        }
-
-        return list;
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
+        return vGrid.getPoints(fileType, voxelId, pointType);
     }
 
     public String toString(){
