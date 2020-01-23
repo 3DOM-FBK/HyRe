@@ -4,8 +4,7 @@ import eu.fbk.threedom.pcFilter.utils.Stats;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +21,7 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 100000;
+    private static final int RANDOM_POINTS_NUMBER = 1000000;
     private static final float RANDOM_POINTS_CUBE_SIZE = 10;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class Permeability";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class Porosity";
@@ -93,7 +92,9 @@ public class Main {
                 System.out.println("\nWARNING! the output file already exists");
                 System.exit(1);
             } else
-                System.out.println("..overWrite file");
+                System.out.println("\nreading input files");
+                if(overWrite)
+                    System.out.println("..overWrite output file");
         }
 
 
@@ -110,17 +111,49 @@ public class Main {
         ///////////////////////////////////////////////////////
         // read all lines file 1 & 2
         ///////////////////////////////////////////////////////
-        start = System.currentTimeMillis();
-        Path path = Paths.get(inFile1.toURI());
-        //long lineCount = Files.lines(path).count();
-        //System.out.println("..lines " + lineCount);
-        //printElapsedTime(start, "..number of lines read");
-        //System.exit(0);
 
-        List<String> file1Data = Files.readAllLines(path);
-        path = Paths.get(inFile2.toURI());
-        List<String> file2Data = Files.readAllLines(path);
-        printElapsedTime(start, "..input files read");
+
+        ///////////////////////////////////////////////////////
+//        start = System.currentTimeMillis();
+//        Path path = Paths.get(inFile1.toURI());
+//        //long lineCount = Files.lines(path).count();
+//        //System.out.println("..lines " + lineCount);
+//        //printElapsedTime(start, "..number of lines read");
+//
+//        List<String> file1Data = Files.readAllLines(path);v
+//        printElapsedTime(start, "..first file read");
+
+//        Class cls = file1Data.getClass();
+//        System.out.println("..the type of \"file1Data\" is: " + cls.getName());
+//
+//        start = System.currentTimeMillis();
+//        path = Paths.get(inFile2.toURI());
+//        path = Paths.get(inFile2.toURI());
+//        List<String> file2Data = Files.readAllLines(path);
+//        printElapsedTime(start, "..second file read");
+        ///////////////////////////////////////////////////////
+
+
+        ///////////////////////////////////////////////////////
+        List<String> file1Data = new ArrayList<>();
+        List<String> file2Data = new ArrayList<>();
+
+        // read file 1
+        start = System.currentTimeMillis();
+        FileInputStream inputStream = new FileInputStream(inFile1);
+        Scanner sc = new Scanner(inputStream, "UTF-8");
+        while (sc.hasNextLine())
+            file1Data.add(sc.nextLine());
+        printElapsedTime(start, "..first file read");
+
+        // read file 2
+        start = System.currentTimeMillis();
+        inputStream = new FileInputStream(inFile2);
+        sc = new Scanner(inputStream, "UTF-8");
+        while (sc.hasNextLine())
+            file2Data.add(sc.nextLine());
+        printElapsedTime(start, "..second file read");
+        ///////////////////////////////////////////////////////
 
 
         ///////////////////////////////////////////////////////

@@ -62,7 +62,7 @@ public class PcFilter {
         vGrid = new VoxelGrid(points, bbox, this.voxelSide);
     }
 
-    public void parseData(List<String> data, FileType fileType){
+    public void parseData(List<String> data, FileType fileType) {
         System.out.println("\nparse " + fileType + " file");
 
         ///////////////////////////////////////////////
@@ -71,16 +71,16 @@ public class PcFilter {
         String line = data.get(0);
         int classification;
 
-        if(line.startsWith("// "))
-            line = line.replace("// ",  "");
-        else if(line.startsWith("//"))
-            line = line.replace("//",  "");
+        if (line.startsWith("// "))
+            line = line.replace("// ", "");
+        else if (line.startsWith("//"))
+            line = line.replace("//", "");
         else line = "";
 
         String[] token = line.split(" ");
         // arrays of properties names
         String[] props;
-        if(fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
+        if (fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
             props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
         else
             props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
@@ -88,17 +88,17 @@ public class PcFilter {
         this.header[fileType.ordinal()] = token;
         this.properties[fileType.ordinal()] = props;
 
-        if(Main.DEBUG) {
-            System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
-            System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
-        }
+        //if(Main.DEBUG) {
+        System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
+        System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
+        //}
 
-        for(String prop : props){
+        for (String prop : props) {
             // initialize statistics
-            propsStats.put(prop+"_N", 0f);
-            propsStats.put(prop+"_sum", 0f);
-            propsStats.put(prop+"_mean", 0f);
-            propsStats.put(prop+"_std", 0f);
+            propsStats.put(prop + "_N", 0f);
+            propsStats.put(prop + "_sum", 0f);
+            propsStats.put(prop + "_mean", 0f);
+            propsStats.put(prop + "_std", 0f);
 
             // initialize data hashmap
             dataHm.put(prop, new ArrayList<Float>());
@@ -107,17 +107,17 @@ public class PcFilter {
         ///////////////////////////////////////////////
         // parse all data
         ///////////////////////////////////////////////////////
-        for (int i = 0; i < data.size() - 1 ; i++) {
+        for (int i = 0; i < data.size() - 1; i++) {
             // check if it is a comment or empty line
-            if(data.get(i+1).startsWith("//") || data.get(i+1).isEmpty()) continue;
+            if (data.get(i + 1).startsWith("//") || data.get(i + 1).isEmpty()) continue;
 
-            token = data.get(i+1).split(" ");
+            token = data.get(i + 1).split(" ");
 
             int shift = 0;
             Point p = null;
 
             // X Y Z R G B Class
-            if(fileType == FileType.PHOTOGRAMMETRIC) {
+            if (fileType == FileType.PHOTOGRAMMETRIC) {
                 p = new Point(
                         fileType, Float.parseFloat(token[0]),
                         Float.parseFloat(token[1]),
@@ -125,23 +125,23 @@ public class PcFilter {
                         Integer.parseInt(token[3]),
                         Integer.parseInt(token[4]),
                         Integer.parseInt(token[5]));
-                        p.setClassification(PointClassification.parse(Integer.parseInt(token[6])) );
+                p.setClassification(PointClassification.parse(Integer.parseInt(token[6])));
                 shift = 7;
 
-            // X Y Z Class
-            }else if(fileType == FileType.LYDAR){
+                // X Y Z Class
+            } else if (fileType == FileType.LYDAR) {
                 p = new Point(
                         fileType,
                         Float.parseFloat(token[0]),
                         Float.parseFloat(token[1]),
                         Float.parseFloat(token[2]));
-                        p.setClassification(PointClassification.parse(Integer.parseInt(token[3])) );
+                p.setClassification(PointClassification.parse(Integer.parseInt(token[3])));
                 shift = 4;
             }
 
 
             // for each property
-            for(int t = shift; t < header[fileType.ordinal()].length; t++) {
+            for (int t = shift; t < header[fileType.ordinal()].length; t++) {
                 // add the new value
                 String prop = header[fileType.ordinal()][t];
                 float val = Float.parseFloat(token[t]);
@@ -149,9 +149,9 @@ public class PcFilter {
                 //System.out.println(prop + " " + val);
 
                 // update sum and arithmetic mean
-                propsStats.put(prop+"_N", propsStats.get(prop+"_N") + 1);
-                propsStats.put(prop+"_sum", propsStats.get(prop+"_sum") + val);
-                propsStats.put(prop+"_mean", propsStats.get(prop+"_sum") / propsStats.get(prop+"_N") );
+                propsStats.put(prop + "_N", propsStats.get(prop + "_N") + 1);
+                propsStats.put(prop + "_sum", propsStats.get(prop + "_sum") + val);
+                propsStats.put(prop + "_mean", propsStats.get(prop + "_sum") / propsStats.get(prop + "_N"));
             }
 
             points.addAtBeginning(p);
@@ -160,10 +160,9 @@ public class PcFilter {
             bbox.extendTo(p);
         }
 
-        if(Main.DEBUG) {
-            //System.out.println("\n.. " + ll.toString());
-            System.out.println(".." + bbox.toString());
-        }
+        //if(Main.DEBUG) {
+        System.out.println(".." + bbox.toString());
+        //}
     }
 
     public void updateStatistics(int fileType, LlNode exitNode){
