@@ -8,6 +8,8 @@ import java.util.Comparator;
 
 public class Stats {
 
+    private static long time;
+
     // Function for calculating mean
     public static float mean(float a[], int n) {
         float sum = 0;
@@ -55,6 +57,26 @@ public class Stats {
         }
 
         return median(a, n);
+    }
+
+    private static String convertSecondsToHMmSs(long seconds) {
+        long s = seconds % 60;
+        long m = (seconds / 60) % 60;
+        long h = (seconds / (60 * 60)) % 24;
+        return String.format("%dh:%02dm:%02ds", h,m,s);
+    }
+
+    public static String elapsedTime(long start, String message){
+        time = (System.currentTimeMillis() - start) / 1000;
+        String out = message + " (" + convertSecondsToHMmSs(time) + ")";
+        //System.out.println(out);
+        return out;
+    }
+
+    public static void printElapsedTime(long start, String message){
+        time = (System.currentTimeMillis() - start) / 1000;
+        String out = message + " (" + convertSecondsToHMmSs(time) + ")";
+        System.out.println(out);
     }
 
     public static void main(String[] args){

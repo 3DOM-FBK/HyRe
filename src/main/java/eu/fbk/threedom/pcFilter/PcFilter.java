@@ -1,20 +1,18 @@
 package eu.fbk.threedom.pcFilter;
 
+import eu.fbk.threedom.pcFilter.utils.*;
 import eu.fbk.threedom.pcFilter.utils.LinkedList;
-import eu.fbk.threedom.pcFilter.utils.LlNode;
-import eu.fbk.threedom.pcFilter.utils.VoxelGrid;
-import eu.fbk.threedom.pcFilter.utils.Voxel;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.*;
 
 public class PcFilter {
 
-    private List<String> file1Data, file2Data;
+//    private List<String> file1Data, file2Data;
     private float voxelSide;
     @Setter @Getter private VoxelGrid vGrid;
 
@@ -26,9 +24,13 @@ public class PcFilter {
 
     private @Setter @Getter HashMap<String, ArrayList<Float>> dataHm;
 
-    public PcFilter(List<String> file1Data, List<String> file2Data, float voxelSide) {
-        this.file1Data = file1Data;
-        this.file2Data = file2Data;
+    // timer
+    private static long start;
+    private static long time;
+
+    public PcFilter(File file1Data, File file2Data, float voxelSide) {
+//        this.file1Data = file1Data;
+//        this.file2Data = file2Data;
         this.voxelSide = voxelSide;
 
         bbox = new BBox();
@@ -62,107 +64,120 @@ public class PcFilter {
         vGrid = new VoxelGrid(points, bbox, this.voxelSide);
     }
 
-    public void parseData(List<String> data, FileType fileType) {
+    public void parseData(File data, FileType fileType) {
         System.out.println("\nparse " + fileType + " file");
+        start = System.currentTimeMillis();
 
-        ///////////////////////////////////////////////
-        // parse header if present (first row)
-        ///////////////////////////////////////////////////////
-        String line = data.get(0);
-        int classification;
+        FileInputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(data);
 
-        if (line.startsWith("// "))
-            line = line.replace("// ", "");
-        else if (line.startsWith("//"))
-            line = line.replace("//", "");
-        else line = "";
+            Scanner sc = new Scanner(inputStream, "UTF-8");
+            String line = sc.nextLine(); // header
+            if(line.isEmpty()) return;
 
-        String[] token = line.split(" ");
-        // arrays of properties names
-        String[] props;
-        if (fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
-            props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
-        else
-            props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
+            ///////////////////////////////////////////////
+            // parse header if present (first row)
+            ///////////////////////////////////////////////////////
+            if (line.startsWith("// "))
+                line = line.replace("// ", "");
+            else if (line.startsWith("//"))
+                line = line.replace("//", "");
+            else line = "";
 
-        this.header[fileType.ordinal()] = token;
-        this.properties[fileType.ordinal()] = props;
+            String[] token = line.split(" ");
+            // arrays of properties names
+            String[] props;
+            if (fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
+                props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
+            else
+                props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
 
-        //if(Main.DEBUG) {
-        System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
-        System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
-        //}
+            this.header[fileType.ordinal()] = token;
+            this.properties[fileType.ordinal()] = props;
 
-        for (String prop : props) {
-            // initialize statistics
-            propsStats.put(prop + "_N", 0f);
-            propsStats.put(prop + "_sum", 0f);
-            propsStats.put(prop + "_mean", 0f);
-            propsStats.put(prop + "_std", 0f);
+            //if(Main.DEBUG) {
+            System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
+            System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
+            //}
 
-            // initialize data hashmap
-            dataHm.put(prop, new ArrayList<Float>());
-        }
+            for (String prop : props) {
+                // initialize statistics
+                propsStats.put(prop + "_N", 0f);
+                propsStats.put(prop + "_sum", 0f);
+                propsStats.put(prop + "_mean", 0f);
+                propsStats.put(prop + "_std", 0f);
 
-        ///////////////////////////////////////////////
-        // parse all data
-        ///////////////////////////////////////////////////////
-        for (int i = 0; i < data.size() - 1; i++) {
-            // check if it is a comment or empty line
-            if (data.get(i + 1).startsWith("//") || data.get(i + 1).isEmpty()) continue;
-
-            token = data.get(i + 1).split(" ");
-
-            int shift = 0;
-            Point p = null;
-
-            // X Y Z R G B Class
-            if (fileType == FileType.PHOTOGRAMMETRIC) {
-                p = new Point(
-                        fileType, Float.parseFloat(token[0]),
-                        Float.parseFloat(token[1]),
-                        Float.parseFloat(token[2]),
-                        Integer.parseInt(token[3]),
-                        Integer.parseInt(token[4]),
-                        Integer.parseInt(token[5]));
-                p.setClassification(PointClassification.parse(Integer.parseInt(token[6])));
-                shift = 7;
-
-                // X Y Z Class
-            } else if (fileType == FileType.LYDAR) {
-                p = new Point(
-                        fileType,
-                        Float.parseFloat(token[0]),
-                        Float.parseFloat(token[1]),
-                        Float.parseFloat(token[2]));
-                p.setClassification(PointClassification.parse(Integer.parseInt(token[3])));
-                shift = 4;
+                // initialize data hashmap
+                dataHm.put(prop, new ArrayList<Float>());
             }
 
 
-            // for each property
-            for (int t = shift; t < header[fileType.ordinal()].length; t++) {
-                // add the new value
-                String prop = header[fileType.ordinal()][t];
-                float val = Float.parseFloat(token[t]);
-                p.setProp(prop, val);
-                //System.out.println(prop + " " + val);
+            ///////////////////////////////////////////////
+            // parse all data
+            ///////////////////////////////////////////////////////
+            while (sc.hasNextLine()) {
+                line = sc.nextLine();
+                if (line.startsWith("//") || line.isEmpty()) continue;
 
-                // update sum and arithmetic mean
-                propsStats.put(prop + "_N", propsStats.get(prop + "_N") + 1);
-                propsStats.put(prop + "_sum", propsStats.get(prop + "_sum") + val);
-                propsStats.put(prop + "_mean", propsStats.get(prop + "_sum") / propsStats.get(prop + "_N"));
+                token = line.split(" ");
+
+                int shift = 0;
+                Point p = null;
+
+                // X Y Z R G B Class
+                if (fileType == FileType.PHOTOGRAMMETRIC) {
+                    p = new Point(
+                            fileType, Float.parseFloat(token[0]),
+                            Float.parseFloat(token[1]),
+                            Float.parseFloat(token[2]),
+                            Integer.parseInt(token[3]),
+                            Integer.parseInt(token[4]),
+                            Integer.parseInt(token[5]));
+                    p.setClassification(PointClassification.parse(Integer.parseInt(token[6])));
+                    shift = 7;
+
+                    // X Y Z Class
+                } else if (fileType == FileType.LYDAR) {
+                    p = new Point(
+                            fileType,
+                            Float.parseFloat(token[0]),
+                            Float.parseFloat(token[1]),
+                            Float.parseFloat(token[2]));
+                    p.setClassification(PointClassification.parse(Integer.parseInt(token[3])));
+                    shift = 4;
+                }
+
+                /////////////////////////
+                // for each property
+                for (int t = shift; t < header[fileType.ordinal()].length; t++) {
+                    // add the new value
+                    String prop = header[fileType.ordinal()][t];
+                    float val = Float.parseFloat(token[t]);
+                    p.setProp(prop, val);
+                    //System.out.println(prop + " " + val);
+
+                    // update sum and arithmetic mean
+                    propsStats.put(prop + "_N", propsStats.get(prop + "_N") + 1);
+                    propsStats.put(prop + "_sum", propsStats.get(prop + "_sum") + val);
+                    propsStats.put(prop + "_mean", propsStats.get(prop + "_sum") / propsStats.get(prop + "_N"));
+                }
+
+                points.addAtBeginning(p);
+
+                // update bounding box with the new point
+                bbox.extendTo(p);
+                //}
             }
 
-            points.addAtBeginning(p);
+            //if(Main.DEBUG) {
+            System.out.println(".." + bbox.toString());
+            //}
 
-            // update bounding box with the new point
-            bbox.extendTo(p);
+            Stats.printElapsedTime(start, "..file read");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
-
-        //if(Main.DEBUG) {
-        System.out.println(".." + bbox.toString());
-        //}
     }
 
     public void updateStatistics(int fileType, LlNode exitNode){

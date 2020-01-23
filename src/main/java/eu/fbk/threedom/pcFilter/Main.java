@@ -135,24 +135,24 @@ public class Main {
 
 
         ///////////////////////////////////////////////////////
-        List<String> file1Data = new ArrayList<>();
-        List<String> file2Data = new ArrayList<>();
-
-        // read file 1
-        start = System.currentTimeMillis();
-        FileInputStream inputStream = new FileInputStream(inFile1);
-        Scanner sc = new Scanner(inputStream, "UTF-8");
-        while (sc.hasNextLine())
-            file1Data.add(sc.nextLine());
-        printElapsedTime(start, "..first file read");
-
-        // read file 2
-        start = System.currentTimeMillis();
-        inputStream = new FileInputStream(inFile2);
-        sc = new Scanner(inputStream, "UTF-8");
-        while (sc.hasNextLine())
-            file2Data.add(sc.nextLine());
-        printElapsedTime(start, "..second file read");
+//        List<String> file1Data = new ArrayList<>();
+//        List<String> file2Data = new ArrayList<>();
+//
+//        // read file 1
+//        start = System.currentTimeMillis();
+//        FileInputStream inputStream = new FileInputStream(inFile1);
+//        Scanner sc = new Scanner(inputStream, "UTF-8");
+//        while (sc.hasNextLine())
+//            file1Data.add(sc.nextLine());
+//        printElapsedTime(start, "..first file read");
+//
+//        // read file 2
+//        start = System.currentTimeMillis();
+//        inputStream = new FileInputStream(inFile2);
+//        sc = new Scanner(inputStream, "UTF-8");
+//        while (sc.hasNextLine())
+//            file2Data.add(sc.nextLine());
+//        printElapsedTime(start, "..second file read");
         ///////////////////////////////////////////////////////
 
 
@@ -160,8 +160,8 @@ public class Main {
         // create the structure
         ///////////////////////////////////////////////////////
         start = System.currentTimeMillis();
-        PcFilter pcf = new PcFilter(file1Data, file2Data, voxelSide);
-        printElapsedTime(start, "..voxel grid created");
+        PcFilter pcf = new PcFilter(inFile1, inFile2, voxelSide);
+        Stats.printElapsedTime(start, "..voxel grid created");
 
 
         ///////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ public class Main {
                     System.out.println("......" + pc.name() + ": " + pointList.size());
                 }
             }
-            printElapsedTime(start, "processed");
+            Stats.printElapsedTime(start, "processed");
         }
 
         for(FileType ft : FileType.values()){
@@ -220,7 +220,7 @@ public class Main {
                 }
                 System.out.println("..mean of voxel point density " + (numberOfPointsInVoxel_sum / voxelSet.size()));
             }
-            printElapsedTime(start, "processed");
+            Stats.printElapsedTime(start, "processed");
         }
 
 
@@ -253,7 +253,7 @@ public class Main {
             float mad = Stats.mad(values, values.length);
             System.out.println("....med: " + med + "\n....mad: " + mad + "\n....sigmaM: " + (mad * 1.4826));
         }
-        printElapsedTime(start, "processed");
+        Stats.printElapsedTime(start, "processed");
 
         for(FileType ft : FileType.values()) {
             System.out.println("\n.." + ft.name());
@@ -290,7 +290,7 @@ public class Main {
                     System.out.println("........med: " + med + "\n........mad: " + mad + "\n........sigmaM: " + (mad * 1.4826));
                 }
             }
-            printElapsedTime(start, "processed");
+            Stats.printElapsedTime(start, "processed");
         }
 
 
@@ -351,20 +351,9 @@ public class Main {
             e.printStackTrace();
         }
 
-        printElapsedTime(start, "..random cloud generated and written in " + fileName);
+        Stats.printElapsedTime(start, "..random cloud generated and written in " + fileName);
     }
 
-    private static String convertSecondsToHMmSs(long seconds) {
-        long s = seconds % 60;
-        long m = (seconds / 60) % 60;
-        long h = (seconds / (60 * 60)) % 24;
-        return String.format("%dh:%02dm:%02ds", h,m,s);
-    }
-
-    private void printElapsedTime(long start, String message){
-        time = (System.currentTimeMillis() - start) / 1000;
-        System.out.println(message + " (" + convertSecondsToHMmSs(time) + ")");
-    }
 
     /**
      * Main method
