@@ -135,6 +135,8 @@ public class PcFilter {
             else
                 props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
 
+            fileType.setProps(props);
+
             this.header[fileType.ordinal()] = token;
             this.properties[fileType.ordinal()] = props;
 
@@ -143,6 +145,7 @@ public class PcFilter {
             System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
             //}
 
+            //TODO: remove HM
             for (String prop : props) {
                 // initialize statistics
                 propsStats.put(prop + "_N", 0f);
@@ -158,6 +161,7 @@ public class PcFilter {
             ///////////////////////////////////////////////
             // parse all data
             ///////////////////////////////////////////////////////
+            //int count = 0;
             while (sc.hasNextLine()) {
                 line = sc.nextLine();
                 if (line.startsWith("//") || line.isEmpty()) continue;
@@ -200,7 +204,11 @@ public class PcFilter {
 
                     String prop = header[fileType.ordinal()][t];
                     float val = Float.parseFloat(token[t]);
-                    p.setProp(prop, val);
+
+                    // add the value inside the point properies array
+                    p.setProp(t-shift, val);
+//                    p.setProp(prop, val); // version with the HM
+
                     //System.out.println(prop + " " + val);
 
                     // update sum and arithmetic mean
@@ -239,10 +247,13 @@ public class PcFilter {
             Point p = (Point)n.value();
 
             // for each property
-            for(String prop : props) {
-                if(p.getProp(prop) == -Float.MAX_VALUE)
+//            for(String prop : props) {
+            for(int i=0; i<props.length; i++) {
+                String prop = props[i];
+//                if(p.getProp(prop) == -Float.MAX_VALUE)
+                if(p.getProp(i) == -Float.MAX_VALUE)
                     continue;
-                float val = p.getProp(prop);
+                float val = p.getProp(i);
                 float mean = propsStats.get(prop+"_mean");
                 float std =  (float)Math.pow((val - mean), 2);
                 propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
@@ -269,13 +280,17 @@ public class PcFilter {
             Point p = (Point) n.value();
 
             // for each property
-            for (String prop : props) {
-                float val = p.getProp(prop);
+//            for (String prop : props) {
+            for(int i=0; i<props.length; i++) {
+                String prop = props[i];
+//                float val = p.getProp(prop);
+                float val = p.getProp(i);
 
                 // normalize values between 0 and 1
                 float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
                 float norm_val = 1 / (1 + (float)Math.exp(-x));
-                p.setProp(prop, norm_val);
+//                p.setProp(prop, norm_val);
+                p.setProp(i, norm_val);
 
                 // save the normalized value in the right arraylist
                 ArrayList al = dataHm.get(prop);

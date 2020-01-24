@@ -226,7 +226,8 @@ public class Main {
                     for (int v : voxelSet) {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
                         for (Point p : pointList)
-                            propValues.add(p.getProp(prop));
+//                            propValues.add(p.getProp(prop));
+                            propValues.add(p.getProp(k));
                     }
                     if(Main.DEBUG)
                         System.out.println("......" + pc.name() + " (normalized) " + propValues);

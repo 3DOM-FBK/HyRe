@@ -8,6 +8,8 @@ import java.util.HashMap;
 
 public class Point extends Vector3f {
 
+//    @Setter @Getter private int id;
+
     @Setter @Getter private int r;
     @Setter @Getter private int g;
     @Setter @Getter private int b;
@@ -16,29 +18,36 @@ public class Point extends Vector3f {
     @Getter @Setter private FileType type; // 0 photogrammetric, 1 lydar
     @Getter @Setter private PointClassification classification; // 0 1 2
 
-    private HashMap<String, Float> propsDictionary;
+//    private HashMap<String, Float> propsDictionary;
+    private float[] propertiesValues;
 
     public Point(float x, float y, float z) {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
 
-        propsDictionary = new HashMap<>();
+//        propsDictionary = new HashMap<>();
     }
 
-    public Point(FileType type,  float x, float y, float z) {
+    public Point(/*int id, */FileType type,  float x, float y, float z) {
+//        this.id = id;
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
 
-        propsDictionary = new HashMap<>();
+//        propsDictionary = new HashMap<>();
+
+        propertiesValues = new float[type.getProps().length];
     }
 
-    public Point(FileType type, float x, float y, float z, int r, int g, int b) {
+    public Point(/*int id,*/ FileType type, float x, float y, float z, int r, int g, int b) {
+//        this.id = id;
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
 
-        propsDictionary = new HashMap<>();
+//        propsDictionary = new HashMap<>();
+
+        propertiesValues = new float[type.getProps().length];
     }
 
     public void move(float x, float y, float z){
@@ -56,15 +65,21 @@ public class Point extends Vector3f {
         return toString();
     }
 
-    public void setProp(String property, Float value){
-        propsDictionary.put(property, value);
+//    public void setProp(String property, Float value){
+//        propsDictionary.put(property, value);
+//    }
+//
+//    public float getProp(String property){
+//        if(!propsDictionary.containsKey(property))
+//            return -Float.MAX_VALUE;
+//        return propsDictionary.get(property);
+//    }
+
+    public void setProp(int propertyIndex, Float value){
+        propertiesValues[propertyIndex] = value;
     }
 
-    public float getProp(String property){
-        if(!propsDictionary.containsKey(property))
-            return -Float.MAX_VALUE;
-        return propsDictionary.get(property);
-    }
+    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
 
     public float length(Point p){
         return (float)Math.sqrt(this.dot(p));
@@ -88,10 +103,10 @@ public class Point extends Vector3f {
 
     public static void main(String[] args){
         Point p = new Point(1, 2, 3);
-        p.setProp("intensity", 666.0f);
+        p.setProp(0, 666.0f);
 
         System.out.println(p.toString());
-        System.out.println("\tintensity: " + p.getProp("intensity"));
+        System.out.println("\tintensity: " + p.getProp(0));
 
         Point p1 = new Point(1, 1, 1);
         Point p2 = new Point(2, 2, 2);
