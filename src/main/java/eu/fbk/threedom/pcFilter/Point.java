@@ -41,6 +41,10 @@ public class Point extends Vector3f {
         propsDictionary = new HashMap<>();
     }
 
+    public void move(float x, float y, float z){
+        super.x = x; super.y = y; super.z = z;
+    }
+
     public String toString(){
         return "point(" + x + ", " + y + ", " + z + ")";
     }
@@ -57,6 +61,8 @@ public class Point extends Vector3f {
     }
 
     public float getProp(String property){
+        if(!propsDictionary.containsKey(property))
+            return -Float.MAX_VALUE;
         return propsDictionary.get(property);
     }
 

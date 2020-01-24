@@ -5,6 +5,7 @@ import eu.fbk.threedom.pcFilter.utils.LinkedList;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.vecmath.Vector3f;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,6 +25,8 @@ public class PcFilter {
 
     private @Setter @Getter HashMap<String, ArrayList<Float>> dataHm;
 
+    private static Point point;
+
     // timer
     private static long start;
     private static long time;
@@ -41,6 +44,8 @@ public class PcFilter {
         this.propsStats = new HashMap<>();
 
         this.dataHm = new HashMap<>();
+
+        point = new Point(0, 0, 0);
 
         //////////////////////////////
         // parse PHOTOGRAMMETRIC file
@@ -64,12 +69,49 @@ public class PcFilter {
         vGrid = new VoxelGrid(points, bbox, this.voxelSide);
     }
 
+    public Point findMin(File data){
+        BBox bbox = new BBox();
+        FileInputStream inputStream = null;
+
+        try {
+            start = System.currentTimeMillis();
+
+            inputStream = new FileInputStream(data);
+
+            Scanner sc = new Scanner(inputStream, "UTF-8");
+            String line = sc.nextLine(); // header
+
+            while (sc.hasNextLine()) {
+                line = sc.nextLine();
+                if (line.startsWith("//") || line.isEmpty() || line == null) continue;
+
+                String[] token = line.split(" ");
+
+                point.move( Float.parseFloat(token[0]),
+                            Float.parseFloat(token[1]),
+                            Float.parseFloat(token[2]) );
+
+                bbox.extendTo(point);
+            }
+
+            Stats.printElapsedTime(start, "..bbox min evaluated");
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return bbox.getMin();
+    }
+
+
     public void parseData(File data, FileType fileType) {
         System.out.println("\nparse " + fileType + " file");
-        start = System.currentTimeMillis();
+
+        Point min = findMin(data);
 
         FileInputStream inputStream = null;
         try {
+            start = System.currentTimeMillis();
             inputStream = new FileInputStream(data);
 
             Scanner sc = new Scanner(inputStream, "UTF-8");
@@ -128,23 +170,23 @@ public class PcFilter {
                 // X Y Z R G B Class
                 if (fileType == FileType.PHOTOGRAMMETRIC) {
                     p = new Point(
-                            fileType, Float.parseFloat(token[0]),
-                            Float.parseFloat(token[1]),
-                            Float.parseFloat(token[2]),
+                            fileType, Float.parseFloat(token[0]) - min.getX(), // x
+                            Float.parseFloat(token[1]) - min.getY(), // y
+                            Float.parseFloat(token[2]) - min.getZ(), // z
                             Integer.parseInt(token[3]),
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
-                    p.setClassification(PointClassification.parse(Integer.parseInt(token[6])));
+                    p.setClassification(PointClassification.parse(Integer.parseInt(token[6].substring(0, 1))));
                     shift = 7;
 
                     // X Y Z Class
                 } else if (fileType == FileType.LYDAR) {
                     p = new Point(
                             fileType,
-                            Float.parseFloat(token[0]),
-                            Float.parseFloat(token[1]),
-                            Float.parseFloat(token[2]));
-                    p.setClassification(PointClassification.parse(Integer.parseInt(token[3])));
+                            Float.parseFloat(token[0]) - min.getX(),
+                            Float.parseFloat(token[1]) - min.getY(),
+                            Float.parseFloat(token[2]) - min.getZ());
+                    p.setClassification(PointClassification.parse(Integer.parseInt(token[3].substring(0, 1))));
                     shift = 4;
                 }
 
@@ -152,6 +194,10 @@ public class PcFilter {
                 // for each property
                 for (int t = shift; t < header[fileType.ordinal()].length; t++) {
                     // add the new value
+                    // skip if value is "nan"
+                    if(token[t].equals("nan"))
+                        continue;
+
                     String prop = header[fileType.ordinal()][t];
                     float val = Float.parseFloat(token[t]);
                     p.setProp(prop, val);
@@ -194,10 +240,14 @@ public class PcFilter {
 
             // for each property
             for(String prop : props) {
+                if(p.getProp(prop) == -Float.MAX_VALUE)
+                    continue;
                 float val = p.getProp(prop);
                 float mean = propsStats.get(prop+"_mean");
                 float std =  (float)Math.pow((val - mean), 2);
                 propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
+
+                continue;
             }
 
             // exit condition

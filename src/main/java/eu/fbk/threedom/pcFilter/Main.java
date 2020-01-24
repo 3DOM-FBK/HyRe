@@ -22,7 +22,7 @@ public class Main {
 
     public static boolean DEBUG;
     private static final int RANDOM_POINTS_NUMBER = 1000000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 10;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 100;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class Permeability";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class Porosity";
 
@@ -107,55 +107,6 @@ public class Main {
         }
 
 
-
-        ///////////////////////////////////////////////////////
-        // read all lines file 1 & 2
-        ///////////////////////////////////////////////////////
-
-
-        ///////////////////////////////////////////////////////
-//        start = System.currentTimeMillis();
-//        Path path = Paths.get(inFile1.toURI());
-//        //long lineCount = Files.lines(path).count();
-//        //System.out.println("..lines " + lineCount);
-//        //printElapsedTime(start, "..number of lines read");
-//
-//        List<String> file1Data = Files.readAllLines(path);v
-//        printElapsedTime(start, "..first file read");
-
-//        Class cls = file1Data.getClass();
-//        System.out.println("..the type of \"file1Data\" is: " + cls.getName());
-//
-//        start = System.currentTimeMillis();
-//        path = Paths.get(inFile2.toURI());
-//        path = Paths.get(inFile2.toURI());
-//        List<String> file2Data = Files.readAllLines(path);
-//        printElapsedTime(start, "..second file read");
-        ///////////////////////////////////////////////////////
-
-
-        ///////////////////////////////////////////////////////
-//        List<String> file1Data = new ArrayList<>();
-//        List<String> file2Data = new ArrayList<>();
-//
-//        // read file 1
-//        start = System.currentTimeMillis();
-//        FileInputStream inputStream = new FileInputStream(inFile1);
-//        Scanner sc = new Scanner(inputStream, "UTF-8");
-//        while (sc.hasNextLine())
-//            file1Data.add(sc.nextLine());
-//        printElapsedTime(start, "..first file read");
-//
-//        // read file 2
-//        start = System.currentTimeMillis();
-//        inputStream = new FileInputStream(inFile2);
-//        sc = new Scanner(inputStream, "UTF-8");
-//        while (sc.hasNextLine())
-//            file2Data.add(sc.nextLine());
-//        printElapsedTime(start, "..second file read");
-        ///////////////////////////////////////////////////////
-
-
         ///////////////////////////////////////////////////////
         // create the structure
         ///////////////////////////////////////////////////////
@@ -181,37 +132,39 @@ public class Main {
         for(FileType ft : FileType.values()){
             start = System.currentTimeMillis();
             System.out.println("\n" + ft.name() + " cloud");
+            System.out.println("..random voxel -> " + i);
+
+            pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
+            if(pointList != null)
+                if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
+                else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
+
             for(PointClassification pc : PointClassification.values()){
+                pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+                if(pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
 
-                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
-
-                if(pointList != null) {
-                    System.out.println("..random voxel -> " + i);
-                    if (Main.DEBUG)
-                        System.out.println("...." + ft.name() + " points " + pointList);
-                    else
-                        System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
-
-                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
-                    System.out.println("......" + pc.name() + ": " + pointList.size());
-                }
             }
             Stats.printElapsedTime(start, "processed");
         }
 
+        int numberOfPointsInVoxel_sum;
+        // cycle on photogrammetry/lydar file
         for(FileType ft : FileType.values()){
             start = System.currentTimeMillis();
             System.out.println("\n" + ft.name() + " cloud");
+
+            // cycle on roof/facade/street point types
             for(PointClassification pc : PointClassification.values()){
+                numberOfPointsInVoxel_sum = 0;
                 Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
                 if(Main.DEBUG)
                     System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
                 else
                     System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
 
-                int numberOfPointsInVoxel_sum = 0;
+                // cycle on voxel
                 for(int v : voxelSet) {
-                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
                     numberOfPointsInVoxel_sum += pointList.size();
                     if(Main.DEBUG) {
                         System.out.println("..voxel " + v);//+ " " + pointList);
@@ -251,7 +204,9 @@ public class Main {
 
             float med = Stats.median(values, values.length);
             float mad = Stats.mad(values, values.length);
-            System.out.println("....med: " + med + "\n....mad: " + mad + "\n....sigmaM: " + (mad * 1.4826));
+            System.out.println("....med: " + med + "\n....mad: " + mad
+                    + "\n....sigmaM: " + (mad * 1.4826)
+                    + "\n....3sigmaM: " + 3*(mad * 1.4826) );
         }
         Stats.printElapsedTime(start, "processed");
 
@@ -287,7 +242,9 @@ public class Main {
 
                     float med = Stats.median(values, values.length);
                     float mad = Stats.mad(values, values.length);
-                    System.out.println("........med: " + med + "\n........mad: " + mad + "\n........sigmaM: " + (mad * 1.4826));
+                    System.out.println("........med: " + med + "\n........mad: " + mad
+                            + "\n........sigmaM: " + (mad * 1.4826)
+                            + "\n....3sigmaM: " + 3*(mad * 1.4826) );
                 }
             }
             Stats.printElapsedTime(start, "processed");
@@ -326,7 +283,7 @@ public class Main {
         randomIn.add(type == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
             float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
-            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE / 15 - 0.0f);
+            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE / 10 - 0.0f);
             float rndFZ = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
 
             int rndClassification = rn.nextInt(3);
