@@ -155,6 +155,16 @@ public class VoxelGrid {
         return list;
     }
 
+    public List<Point> getPoints(FileType fileType){
+        Set voxelSet = getVoxels(fileType);
+        List<Point> list = new ArrayList<>();
+
+        for(Object v : voxelSet)
+            list.addAll(getPoints(fileType, (int)v));
+
+        return list;
+    }
+
     public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -196,6 +206,34 @@ public class VoxelGrid {
         }
 
         return count;
+    }
+
+    public Set<Integer> getVoxels(FileType fileType){
+        Set voxelsSet = new LinkedHashSet<Integer>();
+
+        if(fileType == FileType.PHOTOGRAMMETRIC){
+            voxelsSet.addAll(voxelsList.get(0));
+            voxelsSet.addAll(voxelsList.get(1));
+            voxelsSet.addAll(voxelsList.get(2));
+        }
+
+        if(fileType == FileType.LYDAR){
+            voxelsSet.addAll(voxelsList.get(3));
+            voxelsSet.addAll(voxelsList.get(4));
+            voxelsSet.addAll(voxelsList.get(5));
+        }
+
+//        switch (pointType){
+//            case ROOF:
+//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(0); else return voxelsList.get(3);
+//            case FACADE:
+//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(1); else return voxelsList.get(4);
+//            case STREET:
+//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(2); else return voxelsList.get(5);
+//            default: return null;
+//        }
+
+        return voxelsSet;
     }
 
     public Set<Integer> getVoxels(FileType fileType, PointClassification pointType){

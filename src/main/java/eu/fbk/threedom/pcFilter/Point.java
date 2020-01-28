@@ -18,8 +18,10 @@ public class Point extends Vector3f {
     @Getter @Setter private FileType type; // 0 photogrammetric, 1 lydar
     @Getter @Setter private PointClassification classification; // 0 1 2
 
-//    private HashMap<String, Float> propsDictionary;
+    @Getter @Setter private float score;
+
     private float[] propertiesValues;
+    private float[] propertiesNormValues;
 
     public Point(float x, float y, float z) {
         super.x = x; super.y = y; super.z = z;
@@ -34,9 +36,8 @@ public class Point extends Vector3f {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
 
-//        propsDictionary = new HashMap<>();
-
         propertiesValues = new float[type.getProps().length];
+        propertiesNormValues = new float[type.getProps().length];
     }
 
     public Point(/*int id,*/ FileType type, float x, float y, float z, int r, int g, int b) {
@@ -45,9 +46,8 @@ public class Point extends Vector3f {
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
 
-//        propsDictionary = new HashMap<>();
-
         propertiesValues = new float[type.getProps().length];
+        propertiesNormValues = new float[type.getProps().length];
     }
 
     public void move(float x, float y, float z){
@@ -79,7 +79,13 @@ public class Point extends Vector3f {
         propertiesValues[propertyIndex] = value;
     }
 
+    public void setNormProp(int propertyIndex, Float value){
+        propertiesNormValues[propertyIndex] = value;
+    }
+
     public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
+
+    public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
 
     public float length(Point p){
         return (float)Math.sqrt(this.dot(p));

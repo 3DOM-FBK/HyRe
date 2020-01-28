@@ -21,10 +21,10 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 1000000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 100;
-    private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class Permeability";
-    private static final String RANDOM_FILE2_HEADER = "// X Y Z Class Porosity";
+    private static final int RANDOM_POINTS_NUMBER = 1000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 10;
+    private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class NumberOfReturns PIntensity";
+    private static final String RANDOM_FILE2_HEADER = "// X Y Z Class LIntensity dZVariance ScanAngleRank EchoRatio";
 
     private static String filePath, fileName, fn1, fn2;
 
@@ -79,23 +79,23 @@ public class Main {
 
         Path out = null;
 
-        try {
-            if (outFile.getName() == "")
-                outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
-            System.out.println("outFile: " + outFile);
-
-
-            out = Paths.get(outFile.toURI());
-            Files.createFile(out);
-        } catch (FileAlreadyExistsException foee) {
-            if (overWrite == null || !overWrite) {
-                System.out.println("\nWARNING! the output file already exists");
-                System.exit(1);
-            } else
-                System.out.println("\nreading input files");
-                if(overWrite)
-                    System.out.println("..overWrite output file");
-        }
+//        try {
+//            if (outFile.getName() == "")
+//                outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+//            System.out.println("outFile: " + outFile);
+//
+//
+//            out = Paths.get(outFile.toURI());
+//            Files.createFile(out);
+//        } catch (FileAlreadyExistsException foee) {
+//            if (overWrite == null || !overWrite) {
+//                System.out.println("\nWARNING! the output file already exists");
+//                System.exit(1);
+//            } else
+//                System.out.println("\nreading input files");
+//                if(overWrite)
+//                    System.out.println("..overWrite output file");
+//        }
 
 
         ///////////////////////////////////////////////////////
@@ -184,37 +184,48 @@ public class Main {
 
         String[][] props = pcf.getProperties();
 
-        HashMap data = pcf.getDataHm();
+//        for(int j=0; j<props.length; j++){
+//            System.out.println("-------------------------------------------properties " + Arrays.toString(props[j]));
+//        }
 
-        start = System.currentTimeMillis();
-        for(int k=0; k < props.length; k++) {
-            String prop = props[k][0];
+        //HashMap data = pcf.getDataHm();
 
-            ArrayList propValues = (ArrayList<Float>) data.get(prop);
-            if(Main.DEBUG)
-                System.out.println(".." + prop + " values (normalized) " + propValues);
-            else
-                System.out.println(".." + prop + " values (normalized) " + propValues.size() + " values");
+        for(FileType ft : FileType.values()) {
+            //System.out.println("\n.." + ft.name());
+            start = System.currentTimeMillis();
 
-            // transform arrayList to array
-            float[] values = new float[propValues.size()];
-            int n = 0;
-            for (Object p : propValues)
-                values[n++] = (float) p;
+            for(int p=0; p < props[ft.ordinal()].length; p++) {
+                String prop = props[ft.ordinal()][p];
 
-            float med = Stats.median(values, values.length);
-            float mad = Stats.mad(values, values.length);
-            System.out.println("....med: " + med + "\n....mad: " + mad
-                    + "\n....sigmaM: " + (mad * 1.4826)
-                    + "\n....3sigmaM: " + 3*(mad * 1.4826) );
+                //ArrayList propValues = (ArrayList<Float>) data.get(prop);
+                List<Point> points = pcf.getPoints(ft);
+
+                // transform arrayList to array
+                float[] values = new float[points.size()];
+                int n = 0;
+//                for (Object v : propValues)
+                for (Point pnt : points)
+                    values[n++] = pnt.getProp(p);
+
+                if (Main.DEBUG)
+                    System.out.println(".." + prop + " values (normalized) " + values.toString());
+                else
+                    System.out.println(".." + prop + " values (normalized) " + values.length + " values");
+
+                float med = Stats.median(values, values.length);
+                float mad = Stats.mad(values, values.length);
+                System.out.println("....med: " + med + "\n....mad: " + mad
+                        + "\n....sigmaM: " + (mad * 1.4826)
+                        + "\n....3sigmaM: " + 3 * (mad * 1.4826));
+            }
+            Stats.printElapsedTime(start, "processed");
         }
-        Stats.printElapsedTime(start, "processed");
 
         for(FileType ft : FileType.values()) {
             System.out.println("\n.." + ft.name());
             start = System.currentTimeMillis();
 
-            for(int k=0; k < props[0].length; k++) {
+            for(int k=0; k < props[ft.ordinal()].length; k++) {
                 String prop = props[ft.ordinal()][k];
                 System.out.println("...." + prop);
 
@@ -228,6 +239,7 @@ public class Main {
                         for (Point p : pointList)
 //                            propValues.add(p.getProp(prop));
                             propValues.add(p.getProp(k));
+
                     }
                     if(Main.DEBUG)
                         System.out.println("......" + pc.name() + " (normalized) " + propValues);
@@ -248,7 +260,35 @@ public class Main {
                             + "\n....3sigmaM: " + 3*(mad * 1.4826) );
                 }
             }
+
             Stats.printElapsedTime(start, "processed");
+        }
+
+
+        ///////////////////////////////////////////////////////
+        // aggregation formula test
+        ///////////////////////////////////////////////////////
+        System.out.println("\nscore");
+        //i = rnd.nextInt( Math.round(pcf.getPropsStats().get("PIntensity_N")) );
+        List<Point> points = pcf.getPoints(FileType.PHOTOGRAMMETRIC);
+//        while(points.isEmpty()){
+//            i = rnd.nextInt( Math.round(pcf.getPropsStats().get("PIntensity_N")) );
+//            points = pcf.getPoints(FileType.PHOTOGRAMMETRIC, i);
+//        }
+
+//        System.out.println("\n" + FileType.parse(0) + " points in random voxel " + i);
+        System.out.println(".." + FileType.parse(FileType.PHOTOGRAMMETRIC.ordinal()) + " points");
+        for(int l=0; l<points.size(); l++) {
+            Point p = points.get(l);
+            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
+        }
+
+        points = pcf.getPoints(FileType.LYDAR);
+
+        System.out.println(".." + FileType.parse(FileType.LYDAR.ordinal()) + " points");
+        for(int l=0; l<points.size(); l++) {
+            Point p = points.get(l);
+            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
         }
 
 
@@ -281,7 +321,7 @@ public class Main {
 
         Random rn = new Random();
 
-        randomIn.add(type == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
+        randomIn.add(type == FileType.PHOTOGRAMMETRIC.ordinal() ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
             float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
             float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE / 10 - 0.0f);
@@ -289,12 +329,34 @@ public class Main {
 
             int rndClassification = rn.nextInt(3);
 
-            randomIn.add(   String.valueOf(rndFX) + " " +
-                            String.valueOf(rndFY) + " " +
-                            String.valueOf(rndFZ) + " " +
-                            (type==0 ? "0 255 0 " : "") +
-                            String.valueOf(rndClassification) + " " +
-                            String.valueOf(rn.nextFloat()) );
+//            randomIn.add(   String.valueOf(rndFX) + " " +
+//                            String.valueOf(rndFY) + " " +
+//                            String.valueOf(rndFZ) + " " +
+//                            (type==0 ? "0 255 0 " : "") +
+//                            String.valueOf(rndClassification) + " "
+//            );
+
+            if(type == FileType.PHOTOGRAMMETRIC.ordinal())
+
+                randomIn.add(   String.valueOf(rndFX) + " " +
+                                String.valueOf(rndFY) + " " +
+                                String.valueOf(rndFZ) + " " +
+                                (type==0 ? "0 255 0 " : "") +
+                                String.valueOf(rndClassification) + " " +
+                                String.valueOf(rn.nextInt(10)) + " " +
+                                String.valueOf(rn.nextFloat())
+                );
+            else
+                randomIn.add(   String.valueOf(rndFX) + " " +
+                                String.valueOf(rndFY) + " " +
+                                String.valueOf(rndFZ) + " " +
+                                (type==0 ? "0 255 0 " : "") +
+                                String.valueOf(rndClassification) + " " +
+                                String.valueOf(rn.nextFloat()) + " " +
+                                String.valueOf(rn.nextFloat()) + " " +
+                                String.valueOf(rn.nextInt(359)) + " " +
+                                String.valueOf(rn.nextFloat())
+                );
         }
 
         fileName = type==0 ? "rnd1.txt" : "rnd2.txt";
