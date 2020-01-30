@@ -1,6 +1,6 @@
 ## READ DATA
 
-```pseudocode```
+```java```
 voxelSide > 0
 	min bboox(f1, f2)
 
@@ -31,7 +31,7 @@ for each filetype
 return -> linked list of points (mix of f1, f2)
 
 print runtime statistics
-```pseudocode```
+```
 
 
 
