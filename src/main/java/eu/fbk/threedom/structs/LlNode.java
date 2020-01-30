@@ -1,4 +1,4 @@
-package eu.fbk.threedom.pcFilter.utils;
+package eu.fbk.threedom.structs;
 
 public class LlNode extends Node {
     private LlNode next;

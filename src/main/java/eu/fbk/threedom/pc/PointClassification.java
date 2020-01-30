@@ -1,4 +1,4 @@
-package eu.fbk.threedom.pcFilter;
+package eu.fbk.threedom.pc;
 
 public enum PointClassification {
 

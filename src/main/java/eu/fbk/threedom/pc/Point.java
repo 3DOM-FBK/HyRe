@@ -1,10 +1,9 @@
-package eu.fbk.threedom.pcFilter;
+package eu.fbk.threedom.pc;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.vecmath.Vector3f;
-import java.util.HashMap;
 
 public class Point extends Vector3f {
 
@@ -23,6 +22,9 @@ public class Point extends Vector3f {
     private float[] propertiesValues;
     private float[] propertiesNormValues;
 
+    private double[] double_propertiesValues;
+    private double[] double_propertiesNormValues;
+
     public Point(float x, float y, float z) {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
@@ -38,6 +40,9 @@ public class Point extends Vector3f {
 
         propertiesValues = new float[type.getProps().length];
         propertiesNormValues = new float[type.getProps().length];
+
+        double_propertiesValues = new double[type.getProps().length];
+        double_propertiesNormValues = new double[type.getProps().length];
     }
 
     public Point(/*int id,*/ FileType type, float x, float y, float z, int r, int g, int b) {
@@ -48,6 +53,9 @@ public class Point extends Vector3f {
 
         propertiesValues = new float[type.getProps().length];
         propertiesNormValues = new float[type.getProps().length];
+
+        double_propertiesValues = new double[type.getProps().length];
+        double_propertiesNormValues = new double[type.getProps().length];
     }
 
     public void move(float x, float y, float z){
@@ -82,6 +90,34 @@ public class Point extends Vector3f {
         return sb.toString();
     }
 
+    public String toStringDoubleOutput(boolean normalized, Point min){
+        StringBuilder sb = new StringBuilder();
+
+        if(this.type == FileType.PHOTOGRAMMETRIC) {
+            sb.append(  String.valueOf(getX() + min.getX()) + " " +
+                    String.valueOf(getY() + min.getY()) + " " +
+                    String.valueOf(getZ() + min.getZ()) + " " +
+                    String.valueOf(getR()) + " " +
+                    String.valueOf(getG()) + " " +
+                    String.valueOf(getB()) + " "    );
+        }
+
+        if(this.type == FileType.LIDAR) {
+            sb.append(  String.valueOf(getX() + min.getX()) + " " +
+                    String.valueOf(getY() + min.getY()) + " " +
+                    String.valueOf(getZ() + min.getZ()) + " "    );
+        }
+
+        if(normalized)
+            for(double prop : double_propertiesNormValues)
+                sb.append(String.valueOf(prop) + " ");
+        else
+            for(double prop : double_propertiesValues)
+                sb.append(String.valueOf(prop) + " ");
+
+        return sb.toString();
+    }
+
     public String toString(){
         return "point(" + x + ", " + y + ", " + z + ")";
     }
@@ -106,14 +142,18 @@ public class Point extends Vector3f {
     public void setProp(int propertyIndex, Float value){
         propertiesValues[propertyIndex] = value;
     }
-
     public void setNormProp(int propertyIndex, Float value){
         propertiesNormValues[propertyIndex] = value;
     }
 
-    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
+    public void setDoubleProp(int propertyIndex, Double value){ double_propertiesValues[propertyIndex] = value;}
+    public void setDoubleNormProp(int propertyIndex, Double value){double_propertiesNormValues[propertyIndex] = value;    }
 
+    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
     public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
+
+    public double getDoubleProp(int propertyIndex){return double_propertiesValues[propertyIndex];}
+    public double getDoubleNormProp(int propertyIndex){return double_propertiesNormValues[propertyIndex];}
 
     public float length(Point p){
         return (float)Math.sqrt(this.dot(p));

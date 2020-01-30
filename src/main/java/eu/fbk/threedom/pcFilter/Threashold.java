@@ -1,5 +1,7 @@
 package eu.fbk.threedom.pcFilter;
 
+import eu.fbk.threedom.pc.FileType;
+import eu.fbk.threedom.pc.PointClassification;
 import lombok.Getter;
 import lombok.Setter;
 

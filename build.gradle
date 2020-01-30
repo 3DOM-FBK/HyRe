@@ -32,7 +32,7 @@ dependencies {
 project.ext.mainClassName = "eu.fbk.threedom.pcFilter.Main"
 
 //////////////////////////
-// maia JAR CREATION
+// mainFilter JAR CREATION
 task distPcFilter(type: Jar, dependsOn: classes){
     from files(sourceSets.main.output.classesDir)
     from files(sourceSets.main.output.resourcesDir)
@@ -47,7 +47,7 @@ task distPcFilter(type: Jar, dependsOn: classes){
 
                 "Implementation-Title": "eu.fbk.threedom.pcFilter.Main",
                 "Implementation-Version": version,
-                "Implementation-Vendor": "FBK"
+                "Implementation-Vendor": "Welponer@FBK"
         )
     }
 
@@ -57,7 +57,7 @@ task distPcFilter(type: Jar, dependsOn: classes){
         // Create batch
         File bat = new File(destinationDir, "pcFilter-${project.version}.bat")
         destinationDir.mkdirs()
-        bat.write('java -jar -Xmx6G -Xms6G ' + archiveName + " PHOTO.txt LIDAR.txt 0.0 -w") //+ ' > output.log 2>&1')
+        bat.write('java -jar -Xmx6G -Xms6G ' + archiveName + " PHOTO.txt LIDAR.txt 0.0 -w " + ' > output.log 2>&1')
         // - XX:-UseGCOverheadLimit
 
         // Create zip
@@ -68,6 +68,47 @@ task distPcFilter(type: Jar, dependsOn: classes){
             destinationDir file('build/dist/')
 
             archiveName = "pcFilter-${project.version}.zip"
+        }.execute();
+    }
+}
+
+//////////////////////////
+// mainNorm JAR CREATION
+task distPcNorm(type: Jar, dependsOn: classes) {
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from {configurations.compile.collect {zipTree(it)}}
+
+    exclude '*.txt'
+
+    manifest {
+        attributes(
+                'Main-Class': "eu.fbk.threedom.pcNorm.Main",
+                //"SplashScreen-Image": "splash.png",
+
+                "Implementation-Title": "eu.fbk.threedom.pcNorm.Main",
+                "Implementation-Version": version,
+                "Implementation-Vendor": "Welponer@FBK"
+        )
+    }
+
+    baseName = 'pcNorm'
+
+    doLast {
+        // Create batch
+        File bat = new File(destinationDir, "pcNorm-${project.version}.bat")
+        destinationDir.mkdirs()
+        bat.write('java -jar -Xmx4G -Xms4G ' + archiveName + " f.txt -w ")
+        // - XX:-UseGCOverheadLimit
+
+        // Create zip
+        task(zippcNorm, type: Zip){
+            from (['build/libs/']){
+                include("pcNorm-${project.version}.jar", "pcNorm-${project.version}.bat")
+            }
+            destinationDir file('build/dist/')
+
+            archiveName = "pcNorm-${project.version}.zip"
         }.execute();
     }
 }

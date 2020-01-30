@@ -1,6 +1,9 @@
 package eu.fbk.threedom.pcFilter;
 
-import eu.fbk.threedom.pcFilter.utils.Stats;
+import eu.fbk.threedom.pc.FileType;
+import eu.fbk.threedom.pc.Point;
+import eu.fbk.threedom.pc.PointClassification;
+import eu.fbk.threedom.utils.Stats;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
 
@@ -168,6 +171,9 @@ public class Main {
                 for (PointClassification pc : PointClassification.values()) {
                     numberOfPointsInVoxel_sum = 0;
                     Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+
+                    if(voxelSet == null) continue;
+
                     if (Main.DEBUG)
                         System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
                     else
@@ -248,6 +254,8 @@ public class Main {
                     if(voxelSide != 0) {
                         Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
 
+                        if(voxelSet == null) continue;
+
                         // extract values from voxels
                         for (int v : voxelSet) {
                             pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
@@ -280,7 +288,7 @@ public class Main {
                     float mad = Stats.mad(values, values.length);
                     System.out.println("........med: " + med + "\n........mad: " + mad
                             + "\n........sigmaM: " + (mad * 1.4826)
-                            + "\n....3sigmaM: " + 3*(mad * 1.4826) );
+                            + "\n........3sigmaM: " + 3*(mad * 1.4826) );
                 }
             }
 
@@ -330,7 +338,8 @@ public class Main {
         for(FileType ft : FileType.values()) {
             System.out.println("..type " + ft.name());
             for (PointClassification pc : PointClassification.values())
-                System.out.println("....class " + pc.name() + " -> " + tc.get(ft, pc).getValue());
+                if(tc.get(ft, pc).getValue() != Float.MAX_VALUE)
+                    System.out.println("....class " + pc.name() + " -> " + tc.get(ft, pc).getValue());
         }
 
 

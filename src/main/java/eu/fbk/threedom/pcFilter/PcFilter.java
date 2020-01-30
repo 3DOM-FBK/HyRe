@@ -1,7 +1,15 @@
 package eu.fbk.threedom.pcFilter;
 
-import eu.fbk.threedom.pcFilter.utils.*;
-import eu.fbk.threedom.pcFilter.utils.LinkedList;
+import eu.fbk.threedom.pc.BBox;
+import eu.fbk.threedom.pc.FileType;
+import eu.fbk.threedom.pc.Point;
+import eu.fbk.threedom.pc.PointClassification;
+import eu.fbk.threedom.structs.LlNode;
+import eu.fbk.threedom.structs.Voxel;
+import eu.fbk.threedom.structs.VoxelGrid;
+import eu.fbk.threedom.utils.*;
+import eu.fbk.threedom.structs.LinkedList;
+import eu.fbk.threedom.pcNorm.Main;
 import lombok.Getter;
 import lombok.Setter;
 import java.io.File;
@@ -429,5 +437,22 @@ public class PcFilter {
         }
 
         return sb.toString();
+    }
+
+    static String parseFormula(String formula){
+        // ( 1 - LIntensity ) + dZVariance + ( 1 - EchoRatio ) + ScanAngleRank
+
+        List<String> out = new ArrayList<>();
+
+        String[] token = formula.split( " ");
+
+        for(String s : token){
+            if(s.equalsIgnoreCase("(") || s.equalsIgnoreCase(")"))
+                out.add(s);
+
+
+        }
+
+        return out.toString();
     }
 }

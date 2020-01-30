@@ -1,10 +1,7 @@
-package eu.fbk.threedom.pcFilter.utils;
+package eu.fbk.threedom.utils;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class Stats {
 
@@ -45,10 +42,40 @@ public class Stats {
         return (a[(n - 1) / 2] + a[n / 2]) / 2;
     }
 
+    // Function for calculating median
+    public static double median(double a[], int n) {
+        // First we sort the array
+        Arrays.sort(a);
+//        for (int i = 0; i < n; i++)
+//            System.out.println(a[i]);
+
+        // check for odd case
+        if (n % 2 != 0)
+            return a[n / 2];
+
+//        System.out.println("a[(n - 1) / 2] " + a[(n - 1) / 2]);
+//        System.out.println("a[n / 2] " +  a[n / 2]);
+//        System.out.println("a[(n - 1) / 2] + a[n / 2] " + (a[(n - 1) / 2] + a[n / 2]));
+
+        return (a[(n - 1) / 2] + a[n / 2]) / 2;
+    }
+
 
     // Function for calculating mad
     public static float mad(float a[], int n){
         float med = median(a, n);
+//        System.out.println("med: " + med);
+
+        for (int i = 0; i < n; i++) {
+            a[i] = Math.abs(a[i] - med);
+//            System.out.println(a[i]);
+        }
+
+        return median(a, n);
+    }
+
+    public static double mad(double a[], int n){
+        double med = median(a, n);
 //        System.out.println("med: " + med);
 
         for (int i = 0; i < n; i++) {

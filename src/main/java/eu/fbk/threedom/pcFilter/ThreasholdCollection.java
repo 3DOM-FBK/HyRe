@@ -1,12 +1,12 @@
 package eu.fbk.threedom.pcFilter;
 
+import eu.fbk.threedom.pc.FileType;
+import eu.fbk.threedom.pc.PointClassification;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class ThreasholdCollection {
 
