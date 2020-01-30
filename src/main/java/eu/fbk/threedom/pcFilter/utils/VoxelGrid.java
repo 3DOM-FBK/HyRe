@@ -57,13 +57,13 @@ public class VoxelGrid {
                 FileType fileType = p.getType();
 
                 switch (p.getClassification()) {
-                    case ROOF:
+                    case C0:
                         if (fileType.type == 0) voxelsList.get(0).add(id); else voxelsList.get(3).add(id);
                         break;
-                    case FACADE:
+                    case C1:
                         if (fileType.type == 0) voxelsList.get(1).add(id); else voxelsList.get(4).add(id);
                         break;
-                    case STREET:
+                    case C2:
                         if (fileType.type == 0) voxelsList.get(2).add(id); else voxelsList.get(5).add(id);
                         break;
                 }
@@ -130,7 +130,7 @@ public class VoxelGrid {
 
     /**
      *
-     * @param fileType defines if it is a photogrammetric point (0) or a lydar point
+     * @param fileType defines if it is a photogrammetric point (0) or a lidar point
      * @param voxelId
      * @return
      */
@@ -217,7 +217,7 @@ public class VoxelGrid {
             voxelsSet.addAll(voxelsList.get(2));
         }
 
-        if(fileType == FileType.LYDAR){
+        if(fileType == FileType.LIDAR){
             voxelsSet.addAll(voxelsList.get(3));
             voxelsSet.addAll(voxelsList.get(4));
             voxelsSet.addAll(voxelsList.get(5));
@@ -228,11 +228,11 @@ public class VoxelGrid {
 
     public Set<Integer> getVoxels(FileType fileType, PointClassification pointType){
         switch (pointType){
-            case ROOF:
+            case C0:
                 if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(0); else return voxelsList.get(3);
-            case FACADE:
+            case C1:
                 if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(1); else return voxelsList.get(4);
-            case STREET:
+            case C2:
                 if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(2); else return voxelsList.get(5);
             default: return null;
         }

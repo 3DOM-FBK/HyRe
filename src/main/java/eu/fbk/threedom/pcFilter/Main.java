@@ -159,7 +159,7 @@ public class Main {
 
             // AVERAGE VOXEL DENSITY
             int numberOfPointsInVoxel_sum;
-            // cycle on photogrammetry/lydar file
+            // cycle on photogrammetry/lidar file
             for (FileType ft : FileType.values()) {
                 start = System.currentTimeMillis();
                 System.out.println("\n" + ft.name() + " cloud");
@@ -303,14 +303,20 @@ public class Main {
 //            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
 //        }
 //
-//        points = (voxelSide != 0) ? pcf.getPoints(FileType.LYDAR, true) :
-//                pcf.getPoints(FileType.LYDAR, false);
+//        points = (voxelSide != 0) ? pcf.getPoints(FileType.LIDAR, true) :
+//                pcf.getPoints(FileType.LIDAR, false);
 //
-//        System.out.println(".." + FileType.parse(FileType.LYDAR.ordinal()) + " points");
+//        System.out.println(".." + FileType.parse(FileType.LIDAR.ordinal()) + " points");
 //        for(int l=0; l < 1; l++) {
 //            Point p = points.get(l);
 //            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
 //        }
+
+//        System.out.println("\nscore");
+//        List<Point> points = (voxelSide != 0) ? pcf.getPoints(FileType.LIDAR, true) :
+//                pcf.getPoints(FileType.LIDAR, false);
+
+
 
 
         ///////////////////////////////////////////////////////
@@ -336,6 +342,8 @@ public class Main {
             headerStr = headerStr.replace("[", "// ");
             headerStr = headerStr.replace("]", "");
 
+            headerStr += " score";
+
             System.out.println("..header: " + headerStr);
 
             bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
@@ -348,7 +356,7 @@ public class Main {
                 for (Point p : points)
                     if (p.getScore() <= tc.get(FileType.PHOTOGRAMMETRIC, p.getClassification()).getValue()) {
                         // SELECT true if you want normalized values
-                        bw.write(p.toStringOutput(false, pcf.getMin()));
+                        bw.write(p.toStringOutput(false, pcf.getMin()) + " " + p.getScore());
                         bw.newLine();
                     }
 

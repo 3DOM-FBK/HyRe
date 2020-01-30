@@ -52,10 +52,10 @@ public class PcFilter {
         LlNode endNode = points.head();
 
         //////////////////////////////
-        // parse LYDAR file
-        parseData(file2Data, FileType.LYDAR);
+        // parse LIDAR file
+        parseData(file2Data, FileType.LIDAR);
         // head -> n -> .. -> n -> endNode -> n .. -> n -> null
-        updateStatistics(FileType.LYDAR, endNode);
+        updateStatistics(FileType.LIDAR, endNode);
 
         System.out.println("\nruntime statistics");
         propsStats.entrySet().forEach(entry->{
@@ -197,7 +197,7 @@ public class PcFilter {
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[6].substring(0, 1))));
 
                     // X Y Z Class
-                } else if (fileType == FileType.LYDAR) {
+                } else if (fileType == FileType.LIDAR) {
                     p = new Point(
                             fileType,
                             Float.parseFloat(token[0]) - this.min.getX(),
@@ -315,12 +315,12 @@ public class PcFilter {
             float score = 0;
             if(fileType == FileType.PHOTOGRAMMETRIC) {
                 switch(p.getClassification()) {
-                    case ROOF:
+                    case C0:
                         score = p.getNormProp(getPropertyIndex(fileType, "PIntensity")) +
                                 (1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns")));
                         break;
-                    case FACADE:
-                    case STREET:
+                    case C1:
+                    case C2:
                         score = p.getNormProp(getPropertyIndex(fileType, "PIntensity"));
                         break;
                     default:
@@ -328,16 +328,16 @@ public class PcFilter {
                 }
             }
 
-            if(fileType == FileType.LYDAR) {
+            if(fileType == FileType.LIDAR) {
                 switch(p.getClassification()) {
-                    case ROOF:
-                    case STREET:
+                    case C0:
+                    case C2:
                         score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
                                 p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
                                 1 - p.getNormProp(getPropertyIndex(fileType, "EchoRatio")) +
                                 p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
                         break;
-                    case FACADE:
+                    case C1:
                         score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
                                 p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
                                 p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
@@ -356,7 +356,7 @@ public class PcFilter {
 
     /**
      *
-     * @param fileType defines if it is a photogrammetric point (0) or 1 lydar point
+     * @param fileType defines if it is a photogrammetric point (0) or 1 lidar point
      * @param voxelId
      * @return
      */

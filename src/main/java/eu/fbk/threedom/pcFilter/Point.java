@@ -15,7 +15,7 @@ public class Point extends Vector3f {
     @Setter @Getter private int b;
 
     //@Getter @Setter private float intensity;
-    @Getter @Setter private FileType type; // 0 photogrammetric, 1 lydar
+    @Getter @Setter private FileType type; // 0 photogrammetric, 1 lidar
     @Getter @Setter private PointClassification classification; // 0 1 2
 
     @Getter @Setter private float score;
@@ -66,7 +66,7 @@ public class Point extends Vector3f {
                         String.valueOf(getB()) + " "    );
         }
 
-        if(this.type == FileType.LYDAR) {
+        if(this.type == FileType.LIDAR) {
             sb.append(  String.valueOf(getX() + min.getX()) + " " +
                         String.valueOf(getY() + min.getY()) + " " +
                         String.valueOf(getZ() + min.getZ()) + " "    );

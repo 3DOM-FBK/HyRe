@@ -6,7 +6,7 @@ import lombok.Setter;
 public enum FileType {
 
     PHOTOGRAMMETRIC(0),
-    LYDAR(1);
+    LIDAR(1);
 
     public int type;
 
@@ -20,7 +20,7 @@ public enum FileType {
     public static FileType parse(int type){
         switch (type) {
             case 0: return PHOTOGRAMMETRIC;
-            case 1: return LYDAR;
+            case 1: return LIDAR;
             default: return null;
         }
     }

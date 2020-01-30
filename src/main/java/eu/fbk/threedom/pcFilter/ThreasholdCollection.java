@@ -49,15 +49,15 @@ public class ThreasholdCollection {
 
     public static void main(String[] args){
 
-        Threashold t00 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.ROOF, 0.5f);
-        Threashold t01 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.FACADE, 0.5f);
-        Threashold t02 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.STREET, 0.5f);
+        Threashold t00 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.C0, 0.5f);
+        Threashold t01 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.C1, 0.5f);
+        Threashold t02 = new Threashold(FileType.PHOTOGRAMMETRIC, PointClassification.C2, 0.5f);
 
         ThreasholdCollection tc = new ThreasholdCollection();
         tc.add(t00);
         tc.add(t01);
         tc.add(t02);
 
-        System.out.println(tc.get(FileType.PHOTOGRAMMETRIC, PointClassification.STREET).getValue());
+        System.out.println(tc.get(FileType.PHOTOGRAMMETRIC, PointClassification.C2).getValue());
     }
 }
