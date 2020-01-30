@@ -54,6 +54,34 @@ public class Point extends Vector3f {
         super.x = x; super.y = y; super.z = z;
     }
 
+    public String toStringOutput(boolean normalized, Point min){
+        StringBuilder sb = new StringBuilder();
+
+        if(this.type == FileType.PHOTOGRAMMETRIC) {
+            sb.append(  String.valueOf(getX() + min.getX()) + " " +
+                        String.valueOf(getY() + min.getY()) + " " +
+                        String.valueOf(getZ() + min.getZ()) + " " +
+                        String.valueOf(getR()) + " " +
+                        String.valueOf(getG()) + " " +
+                        String.valueOf(getB()) + " "    );
+        }
+
+        if(this.type == FileType.LYDAR) {
+            sb.append(  String.valueOf(getX() + min.getX()) + " " +
+                        String.valueOf(getY() + min.getY()) + " " +
+                        String.valueOf(getZ() + min.getZ()) + " "    );
+        }
+
+        if(normalized)
+            for(float prop : propertiesNormValues)
+                sb.append(String.valueOf(prop) + " ");
+        else
+            for(float prop : propertiesValues)
+                sb.append(String.valueOf(prop) + " ");
+
+        return sb.toString();
+    }
+
     public String toString(){
         return "point(" + x + ", " + y + ", " + z + ")";
     }
@@ -108,7 +136,7 @@ public class Point extends Vector3f {
     }
 
     public static void main(String[] args){
-        Point p = new Point(1, 2, 3);
+        Point p = new Point(FileType.PHOTOGRAMMETRIC, 1, 2, 3);
         p.setProp(0, 666.0f);
 
         System.out.println(p.toString());

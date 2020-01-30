@@ -223,16 +223,6 @@ public class VoxelGrid {
             voxelsSet.addAll(voxelsList.get(5));
         }
 
-//        switch (pointType){
-//            case ROOF:
-//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(0); else return voxelsList.get(3);
-//            case FACADE:
-//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(1); else return voxelsList.get(4);
-//            case STREET:
-//                if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(2); else return voxelsList.get(5);
-//            default: return null;
-//        }
-
         return voxelsSet;
     }
 

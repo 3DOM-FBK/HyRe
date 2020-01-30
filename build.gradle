@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'eu.fbk.threedom'
-version '1.1'
+version '1.2'
 
 sourceCompatibility = 1.8
 
@@ -57,7 +57,7 @@ task distPcFilter(type: Jar, dependsOn: classes){
         // Create batch
         File bat = new File(destinationDir, "pcFilter-${project.version}.bat")
         destinationDir.mkdirs()
-        bat.write('java -jar -Xmx6G -Xms6G ' + archiveName + " PHOTO.txt LYDAR.txt 1.0 -w") //+ ' > output.log 2>&1')
+        bat.write('java -jar -Xmx6G -Xms6G ' + archiveName + " PHOTO.txt LYDAR.txt 0.0 -w") //+ ' > output.log 2>&1')
         // - XX:-UseGCOverheadLimit
 
         // Create zip

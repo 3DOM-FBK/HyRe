@@ -4,9 +4,6 @@ import eu.fbk.threedom.pcFilter.utils.*;
 import eu.fbk.threedom.pcFilter.utils.LinkedList;
 import lombok.Getter;
 import lombok.Setter;
-import sun.plugin.javascript.navig.Array;
-
-import javax.vecmath.Vector3f;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,23 +15,19 @@ public class PcFilter {
     @Setter @Getter private VoxelGrid vGrid;
 
     private BBox bbox;
-    private LinkedList points;
+    @Getter private LinkedList points;
 
-    private @Setter @Getter String[][] header, properties;
-    private @Setter @Getter HashMap<String, Float> propsStats;
-
-    //private @Setter @Getter HashMap<String, ArrayList<Float>> dataHm;
+    @Setter @Getter private String[][] header, properties;
+    @Setter @Getter private HashMap<String, Float> propsStats;
 
     private static Point point;
-    private static Point min;
+    @Setter @Getter private static Point min;
 
     // timer
     private static long start;
 
 
     public PcFilter(File file1Data, File file2Data, float voxelSide) {
-//        this.file1Data = file1Data;
-//        this.file2Data = file2Data;
         this.voxelSide = voxelSide;
 
         bbox = new BBox();
@@ -48,7 +41,8 @@ public class PcFilter {
 
         point = new Point(0, 0, 0);
         File[] data = {file1Data, file2Data};
-        min = findMin(data);
+
+        min = (voxelSide != 0) ? findMin(data) : new Point(0, 0,0);
 
         //////////////////////////////
         // parse PHOTOGRAMMETRIC file
@@ -69,11 +63,17 @@ public class PcFilter {
         });
 
         // instantiate the voxel grid
-        vGrid = new VoxelGrid(points, bbox, this.voxelSide);
+        if(voxelSide != 0){
+            start = System.currentTimeMillis();
+            vGrid = new VoxelGrid(points, bbox, this.voxelSide);
+            Stats.printElapsedTime(start, "..voxel grid created");
+        }
     }
 
     public Point findMin(File[] data){
-        BBox bbox = new BBox();
+        System.out.println("\nfinding boundingBox..");
+
+        //BBox bbox = new BBox();
         FileInputStream inputStream = null;
 
         start = System.currentTimeMillis();
@@ -83,7 +83,7 @@ public class PcFilter {
                 inputStream = new FileInputStream(f);
 
                 Scanner sc = new Scanner(inputStream, "UTF-8");
-                String line = sc.nextLine(); // header
+                String line; // header
 
                 while (sc.hasNextLine()) {
                     line = sc.nextLine();
@@ -102,9 +102,13 @@ public class PcFilter {
             }
         }
 
-        Stats.printElapsedTime(start, "..bbox min evaluated " + bbox.getMin().toString());
+        Stats.printElapsedTime(start, "bounding box min is " + bbox.getMin().toString());
 
         return bbox.getMin();
+    }
+
+    public String[] getHeader(FileType type){
+        return header[type.ordinal()];
     }
 
     public int getPropertyIndex(FileType fileType, String prop){
@@ -141,10 +145,14 @@ public class PcFilter {
             String[] token = line.split(" ");
             // arrays of properties names
             String[] props;
-            if (fileType == FileType.PHOTOGRAMMETRIC) // photogrammetric file
-                props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b classe"
-            else
-                props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z classe"
+            int shift = 0;
+            if (fileType == FileType.PHOTOGRAMMETRIC) { // photogrammetric file
+                props = Arrays.copyOfRange(token, 7, token.length); // cut "x y z r g b class"
+                shift = 7;
+            }else{
+                props = Arrays.copyOfRange(token, 4, token.length); // cut "x y z class"
+                shift = 4;
+            }
 
             fileType.setProps(props);
 
@@ -157,14 +165,11 @@ public class PcFilter {
             //}
 
             for (String prop : props) {
-                // initialize statistics
+                // initialize statistic hashmap
                 propsStats.put(prop + "_N", 0f);
                 propsStats.put(prop + "_sum", 0f);
                 propsStats.put(prop + "_mean", 0f);
                 propsStats.put(prop + "_std", 0f);
-
-                // initialize data hashmap
-                //dataHm.put(prop, new ArrayList<Float>());
             }
 
 
@@ -178,7 +183,6 @@ public class PcFilter {
 
                 token = line.split(" ");
 
-                int shift = 0;
                 Point p = null;
 
                 // X Y Z R G B Class
@@ -191,7 +195,6 @@ public class PcFilter {
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[6].substring(0, 1))));
-                    shift = 7;
 
                     // X Y Z Class
                 } else if (fileType == FileType.LYDAR) {
@@ -201,25 +204,26 @@ public class PcFilter {
                             Float.parseFloat(token[1]) - this.min.getY(),
                             Float.parseFloat(token[2]) - this.min.getZ());
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[3].substring(0, 1))));
-                    shift = 4;
                 }
 
                 /////////////////////////
                 // for each property
-                for (int t = shift; t < header[fileType.ordinal()].length; t++) {
+                for (int t = 0; t < props.length; t++) {
                     // add the new value
                     // skip if value is "nan"
-                    if(token[t].equals("nan"))
+                    if(token[shift + t].equals("nan"))
                         continue;
 
-                    String prop = header[fileType.ordinal()][t];
-                    float val = Float.parseFloat(token[t]);
+                    String prop = props[t];
+                    float val = Float.parseFloat(token[shift + t]);
+
+                    // TODO: range conversion (now manually set here)
+                    if(prop.equalsIgnoreCase("ScanAngleRank")) {
+                        val = Math.abs(val);
+                    }
 
                     // add the value inside the point properies array
-                    p.setProp(t-shift, val);
-//                    p.setProp(prop, val); // version with the HM
-
-                    //System.out.println(prop + " " + val);
+                    p.setProp(t, val);
 
                     // update sum and arithmetic mean
                     propsStats.put(prop + "_N", propsStats.get(prop + "_N") + 1);
@@ -228,17 +232,9 @@ public class PcFilter {
                 }
 
                 points.addAtBeginning(p);
-
-                // update bounding box with the new point
-                bbox.extendTo(p);
-                //}
             }
 
-            //if(Main.DEBUG) {
-            System.out.println(".." + bbox.toString());
-            //}
-
-            Stats.printElapsedTime(start, "..file read");
+            Stats.printElapsedTime(start, "file read");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -294,13 +290,16 @@ public class PcFilter {
             // for each property
             for(int i=0; i<props.length; i++) {
                 String prop = props[i];
-                float val = p.getProp(i);
 
-                // TODO: range conversion (now manually set here)
-                if(prop.equalsIgnoreCase("ScanAngleRank")) {
-                    val = Math.abs(val);
-                    p.setProp(i, val);
-                }
+                float val = p.getProp(i);
+                // TODO: for ELEONORA
+                //float val = p.getProp(i) * 1000000;
+
+//                // TODO: range conversion (now manually set here)
+//                if(prop.equalsIgnoreCase("ScanAngleRank")) {
+//                    val = Math.abs(val);
+//                    p.setProp(i, val);
+//                }
 
                 // normalize values between 0 and 1
                 float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
@@ -312,17 +311,19 @@ public class PcFilter {
             }
 
 
-            //TODO: evaluate point aggregation score here
+            //TODO: commented for ELEONORA
             float score = 0;
             if(fileType == FileType.PHOTOGRAMMETRIC) {
                 switch(p.getClassification()) {
                     case ROOF:
                         score = p.getNormProp(getPropertyIndex(fileType, "PIntensity")) +
-                                1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns"));
+                                (1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns")));
                         break;
                     case FACADE:
                     case STREET:
                         score = p.getNormProp(getPropertyIndex(fileType, "PIntensity"));
+                        break;
+                    default:
                         break;
                 }
             }
@@ -367,8 +368,46 @@ public class PcFilter {
         return vGrid.getPoints(fileType, voxelId, pointType);
     }
 
-    public List<Point> getPoints(FileType fileType){
-        return vGrid.getPoints(fileType);
+    public List<Point> getPoints(FileType fileType, boolean voxelGrid){
+        if(voxelGrid)
+            return vGrid.getPoints(fileType);
+
+        // else
+        List<Point> list = new ArrayList<>();
+
+        LlNode n = points.head();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() ) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
+    public List<Point> getPoints(FileType fileType, PointClassification pointType, boolean voxelGrid){
+        if(voxelGrid)
+            return vGrid.getPoints(fileType);
+
+        // else
+        List<Point> list = new ArrayList<>();
+
+        LlNode n = points.head();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType && p.getClassification() == pointType)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() ) break;
+            n = n.next();
+        }
+
+        return list;
     }
 
     public String toString(){

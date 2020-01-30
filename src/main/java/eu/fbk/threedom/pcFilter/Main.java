@@ -16,13 +16,13 @@ public class Main {
     @Argument(index=0, required = true, metaVar = "file1") File inFile1;
     @Argument(index=1, required = true, metaVar = "file2") File inFile2;
     @Argument(index=2, required = true, metaVar = "voxelSide") Float voxelSide;
-    @Option(name = "-o", aliases = { "--output" }, metaVar = "output") File outFile = new File("");
+    @Option(name = "-o", aliases = { "--output" }, metaVar = "output") String outFile;
     @Option(name = "-w", aliases = { "--overwrite" }, metaVar = "overWrite") Boolean overWrite;
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 1000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 10;
+    private static final int RANDOM_POINTS_NUMBER = 1000000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 100;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class NumberOfReturns PIntensity";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class LIntensity dZVariance ScanAngleRank EchoRatio";
 
@@ -31,6 +31,10 @@ public class Main {
     // timer
     private static long start;
     private static long time;
+
+    private ThreasholdCollection tc;
+
+    private File outFile1, outFile2;
 
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -58,7 +62,7 @@ public class Main {
             System.err.print("  voxelSide: the lenght of the voxel cube\n");
 
             // print option sample. This is useful some time
-            System.err.println("\nExample:\n\n  pcFilter f1.txt f2.txt -v" + parser.printExample(OptionHandlerFilter.ALL));
+            System.err.println("\nExample:\n\n  pcFilter f1.txt f2.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
             System.exit(1);
         }
     }
@@ -72,30 +76,33 @@ public class Main {
         if(filePath.isEmpty())
             filePath = new File(Main.class.getProtectionDomain().getCodeSource().getLocation()
                     .toURI()).getParentFile().getPath();
-        System.out.println("filePath: " + filePath);
+        System.out.println("filePath:\n.." + filePath);
 
         fn1 = FilenameUtils.getBaseName(inFile1.getPath()); //System.out.println("fn1: " + fn1);
         fn2 = FilenameUtils.getBaseName(inFile2.getPath()); //System.out.println("fn2: " + fn2);
 
-        Path out = null;
+        Path out1 = null, out2 = null;
 
-//        try {
-//            if (outFile.getName() == "")
-//                outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
-//            System.out.println("outFile: " + outFile);
-//
-//
-//            out = Paths.get(outFile.toURI());
-//            Files.createFile(out);
-//        } catch (FileAlreadyExistsException foee) {
-//            if (overWrite == null || !overWrite) {
-//                System.out.println("\nWARNING! the output file already exists");
-//                System.exit(1);
-//            } else
-//                System.out.println("\nreading input files");
-//                if(overWrite)
-//                    System.out.println("..overWrite output file");
-//        }
+        try {
+            if (outFile == null) {
+                outFile1 = new File(filePath + File.separator + fn1 + "_out.txt");
+                outFile2 = new File(filePath + File.separator + fn2 + "_out.txt");
+            }
+                //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
+
+            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
+            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
+
+        } catch (FileAlreadyExistsException foee) {
+            if (overWrite == null || !overWrite) {
+                System.out.println("\nWARNING! the output file already exists");
+                System.exit(1);
+            } else
+                System.out.println("\nreading input files");
+                if(overWrite)
+                    System.out.println("..overWrite output file");
+        }
 
 
         ///////////////////////////////////////////////////////
@@ -110,86 +117,87 @@ public class Main {
         ///////////////////////////////////////////////////////
         // create the structure
         ///////////////////////////////////////////////////////
-        start = System.currentTimeMillis();
+        //start = System.currentTimeMillis();
         PcFilter pcf = new PcFilter(inFile1, inFile2, voxelSide);
-        Stats.printElapsedTime(start, "..voxel grid created");
+        //Stats.printElapsedTime(start, "..voxel grid created");
+
+        ArrayList<Point> pointList;
+
+        if(voxelSide != 0) {
+            ///////////////////////////////////////////////////////
+            // pick a random voxel to filter
+            ///////////////////////////////////////////////////////
+            Random rnd = new Random();
+            int vGridSize = pcf.getVGrid().getSize();
+            int i = rnd.nextInt(vGridSize);
+
+            ///////////////////////////////////////////////////////
+            // postprocessing statistics
+            ///////////////////////////////////////////////////////
+
+            // POINT BELONGING TO A SPECIFIC VOXEL
+            System.out.println("\n\nPOST-PROCESSING STATISTICS");
 
 
-        ///////////////////////////////////////////////////////
-        // pick a random voxel to filter
-        ///////////////////////////////////////////////////////
-        Random rnd = new Random();
-        int vGridSize = pcf.getVGrid().getSize();
-        int i = rnd.nextInt(vGridSize);
+            for (FileType ft : FileType.values()) {
+                start = System.currentTimeMillis();
+                System.out.println("\n" + ft.name() + " cloud");
+                System.out.println("..random voxel -> " + i);
 
+                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
+                if (pointList != null)
+                    if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
+                    else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
 
-        ///////////////////////////////////////////////////////
-        // postprocessing statistics
-        ///////////////////////////////////////////////////////
-        System.out.println("\n\nPOST-PROCESSING STATISTICS");
-        ArrayList<Point> pointList, pointListRoofs, pointListFacades, pointListStreets;
+                for (PointClassification pc : PointClassification.values()) {
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+                    if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
 
-        for(FileType ft : FileType.values()){
-            start = System.currentTimeMillis();
-            System.out.println("\n" + ft.name() + " cloud");
-            System.out.println("..random voxel -> " + i);
-
-            pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
-            if(pointList != null)
-                if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
-                else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
-
-            for(PointClassification pc : PointClassification.values()){
-                pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
-                if(pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
-
-            }
-            Stats.printElapsedTime(start, "processed");
-        }
-
-        int numberOfPointsInVoxel_sum;
-        // cycle on photogrammetry/lydar file
-        for(FileType ft : FileType.values()){
-            start = System.currentTimeMillis();
-            System.out.println("\n" + ft.name() + " cloud");
-
-            // cycle on roof/facade/street point types
-            for(PointClassification pc : PointClassification.values()){
-                numberOfPointsInVoxel_sum = 0;
-                Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
-                if(Main.DEBUG)
-                    System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
-                else
-                    System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
-
-                // cycle on voxel
-                for(int v : voxelSet) {
-                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
-                    numberOfPointsInVoxel_sum += pointList.size();
-                    if(Main.DEBUG) {
-                        System.out.println("..voxel " + v);//+ " " + pointList);
-                        for (Point p : pointList) System.out.println("...." + p.toString());
-                    }
                 }
-                System.out.println("..mean of voxel point density " + (numberOfPointsInVoxel_sum / voxelSet.size()));
+                Stats.printElapsedTime(start, "processed");
             }
-            Stats.printElapsedTime(start, "processed");
+
+            // AVERAGE VOXEL DENSITY
+            int numberOfPointsInVoxel_sum;
+            // cycle on photogrammetry/lydar file
+            for (FileType ft : FileType.values()) {
+                start = System.currentTimeMillis();
+                System.out.println("\n" + ft.name() + " cloud");
+
+                // cycle on roof/facade/street point types
+                for (PointClassification pc : PointClassification.values()) {
+                    numberOfPointsInVoxel_sum = 0;
+                    Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+                    if (Main.DEBUG)
+                        System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
+                    else
+                        System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
+
+                    // cycle on voxel
+                    for (int v : voxelSet) {
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
+                        numberOfPointsInVoxel_sum += pointList.size();
+                        if (Main.DEBUG) {
+                            System.out.println("..voxel " + v);//+ " " + pointList);
+                            for (Point p : pointList) System.out.println("...." + p.toString());
+                        }
+                    }
+                    System.out.println("..mean of voxel point density " + (numberOfPointsInVoxel_sum / voxelSet.size()));
+                }
+                Stats.printElapsedTime(start, "processed");
+            }
         }
+
+
+
+
 
 
         System.out.println("\nproperties statistics");
 
-//        String[][] props = {    {"Permeability"},
-//                                {"Porosity"}        };
-
         String[][] props = pcf.getProperties();
 
-//        for(int j=0; j<props.length; j++){
-//            System.out.println("-------------------------------------------properties " + Arrays.toString(props[j]));
-//        }
-
-        //HashMap data = pcf.getDataHm();
-
+        // EVALUATE PROPERTY MED/MAD
         for(FileType ft : FileType.values()) {
             //System.out.println("\n.." + ft.name());
             start = System.currentTimeMillis();
@@ -198,17 +206,21 @@ public class Main {
                 String prop = props[ft.ordinal()][p];
 
                 //ArrayList propValues = (ArrayList<Float>) data.get(prop);
-                List<Point> points = pcf.getPoints(ft);
+                List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
+
 
                 // transform arrayList to array
                 float[] values = new float[points.size()];
+
+                if(values.length == 0) break;
+
                 int n = 0;
 //                for (Object v : propValues)
                 for (Point pnt : points)
-                    values[n++] = pnt.getProp(p);
+                    values[n++] = pnt.getNormProp(p);
 
                 if (Main.DEBUG)
-                    System.out.println(".." + prop + " values (normalized) " + values.toString());
+                    System.out.println(".." + prop + " values (normalized) " + Arrays.toString(values));
                 else
                     System.out.println(".." + prop + " values (normalized) " + values.length + " values");
 
@@ -221,6 +233,7 @@ public class Main {
             Stats.printElapsedTime(start, "processed");
         }
 
+        // EVALUATE PROPERTY MED/MAD (CLASS)
         for(FileType ft : FileType.values()) {
             System.out.println("\n.." + ft.name());
             start = System.currentTimeMillis();
@@ -230,17 +243,27 @@ public class Main {
                 System.out.println("...." + prop);
 
                 for (PointClassification pc : PointClassification.values()) {
-                    Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
 
-                    // extract values from voxels
                     ArrayList propValues = new ArrayList();
-                    for (int v : voxelSet) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
-                        for (Point p : pointList)
-//                            propValues.add(p.getProp(prop));
-                            propValues.add(p.getProp(k));
+                    if(voxelSide != 0) {
+                        Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
 
+                        // extract values from voxels
+                        for (int v : voxelSet) {
+                            pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+                            for (Point p : pointList)
+//                            propValues.add(p.getProp(prop));
+                                propValues.add(p.getNormProp(k));
+
+                        }
+                    }else{
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, pc,false);
+                        for (Point p : pointList)
+                            propValues.add(p.getNormProp(k));
                     }
+
+                    if(propValues.isEmpty()) break;
+
                     if(Main.DEBUG)
                         System.out.println("......" + pc.name() + " (normalized) " + propValues);
                     else
@@ -265,53 +288,123 @@ public class Main {
         }
 
 
+
         ///////////////////////////////////////////////////////
         // aggregation formula test
         ///////////////////////////////////////////////////////
-        System.out.println("\nscore");
-        //i = rnd.nextInt( Math.round(pcf.getPropsStats().get("PIntensity_N")) );
-        List<Point> points = pcf.getPoints(FileType.PHOTOGRAMMETRIC);
-//        while(points.isEmpty()){
-//            i = rnd.nextInt( Math.round(pcf.getPropsStats().get("PIntensity_N")) );
-//            points = pcf.getPoints(FileType.PHOTOGRAMMETRIC, i);
+//        System.out.println("\nscore");
+//        //i = rnd.nextInt( Math.round(pcf.getPropsStats().get("PIntensity_N")) );
+//        List<Point> points = (voxelSide != 0) ? pcf.getPoints(FileType.PHOTOGRAMMETRIC, true) :
+//                pcf.getPoints(FileType.PHOTOGRAMMETRIC, false);
+//
+//        System.out.println(".." + FileType.parse(FileType.PHOTOGRAMMETRIC.ordinal()) + " points");
+//        for(int l=0; l < 1; l++) {
+//            Point p = points.get(l);
+//            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
 //        }
-
-//        System.out.println("\n" + FileType.parse(0) + " points in random voxel " + i);
-        System.out.println(".." + FileType.parse(FileType.PHOTOGRAMMETRIC.ordinal()) + " points");
-        for(int l=0; l<points.size(); l++) {
-            Point p = points.get(l);
-            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
-        }
-
-        points = pcf.getPoints(FileType.LYDAR);
-
-        System.out.println(".." + FileType.parse(FileType.LYDAR.ordinal()) + " points");
-        for(int l=0; l<points.size(); l++) {
-            Point p = points.get(l);
-            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
-        }
+//
+//        points = (voxelSide != 0) ? pcf.getPoints(FileType.LYDAR, true) :
+//                pcf.getPoints(FileType.LYDAR, false);
+//
+//        System.out.println(".." + FileType.parse(FileType.LYDAR.ordinal()) + " points");
+//        for(int l=0; l < 1; l++) {
+//            Point p = points.get(l);
+//            System.out.println("...." + p.toString() + " -> score: " + p.getScore());
+//        }
 
 
         ///////////////////////////////////////////////////////
-        // write output file
+        // collect points (filtering according to threasholds)
         ///////////////////////////////////////////////////////
-        // convert char array to list of strings
-        List<String> dataOut = new ArrayList<>();
 
-        // TODO: separate output file in two files
-//        start = System.currentTimeMillis();
-//        dataOut.add(fileType == 0 ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER + " FileType");
-//        dataOut.add("// filter voxel " + i);
-//        for(Point p : pointList){
-//            StringBuilder line = new StringBuilder();
-//            line.append(p.x + " " + p.y + " " + p.z + " ");
-//            line.append("255 0 0 " + p.getIntensity() + " " + p.getType() );
-//
-//            dataOut.add(line.toString());
-//        }
-//
-//        Files.write(out, dataOut);
-//        printElapsedTime(start, "..output written");
+        // read the threashold file
+        File tsfile = new File(filePath + File.separator + "threshold.dat");
+        readThreashold(tsfile);
+
+
+        // write the output files
+        System.out.println("\noutput");
+        BufferedWriter writer1 = new BufferedWriter(new FileWriter(outFile1, false));
+        BufferedWriter writer2 = new BufferedWriter(new FileWriter(outFile2, false));
+        BufferedWriter bw;
+
+        for(FileType ft : FileType.values()) {
+            start = System.currentTimeMillis();
+
+            String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
+            //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
+            headerStr = headerStr.replace("[", "// ");
+            headerStr = headerStr.replace("]", "");
+
+            System.out.println("..header: " + headerStr);
+
+            bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
+            bw.write(headerStr + "");
+            bw.newLine();
+
+            List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
+
+            if (!points.isEmpty())
+                for (Point p : points)
+                    if (p.getScore() <= tc.get(FileType.PHOTOGRAMMETRIC, p.getClassification()).getValue()) {
+                        // SELECT true if you want normalized values
+                        bw.write(p.toStringOutput(false, pcf.getMin()));
+                        bw.newLine();
+                    }
+
+            Stats.printElapsedTime(start, "file written");
+        }
+
+        writer1.close();
+        writer2.close();
+    }
+
+    private void readThreashold(File threashold){
+        System.out.println("\nthreashold");
+
+        FileInputStream inputStream = null;
+        try {
+            start = System.currentTimeMillis();
+            inputStream = new FileInputStream(threashold);
+            System.out.println("..reading " + threashold.getPath());
+
+            tc = new ThreasholdCollection();
+
+            Scanner sc = new Scanner(inputStream, "UTF-8");
+            String[] token;
+
+            while (sc.hasNextLine()) {
+                ///////////////////////////////////////////////
+                // parse header if present (first row)
+                ///////////////////////////////////////////////////////
+                String line = sc.nextLine();
+
+                // skip every commented line
+                if (line.startsWith("//") || line.isEmpty()) continue;
+
+                token = line.split(":");
+
+                tc.add( FileType.parse(Integer.parseInt(token[0])),
+                        PointClassification.parse(Integer.parseInt(token[1])),
+                        Float.parseFloat(token[2]) );
+            }
+
+            Stats.printElapsedTime(start, "threshold file read");
+        } catch (FileNotFoundException e) {
+            // write a sample
+            System.out.println("..writing an empty threshold template file");
+            File empty_threashold = new File(filePath + File.separator + "threshold.dat");
+            Path outPath = Paths.get(empty_threashold.toURI());
+            try {
+                Files.write(outPath, "//type:class:value".getBytes());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            this.readThreashold(threashold); //read the file again
+
+            e.printStackTrace();
+        }
     }
 
     private void generateRandomData(int numberOfPoints, int type){
