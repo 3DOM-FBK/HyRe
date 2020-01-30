@@ -1,11 +1,16 @@
 package eu.fbk.threedom.pcFilter;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ThreasholdCollection {
 
+    @Setter @Getter
     private HashMap<FileType, ArrayList<Threashold>> collection;
 
     public ThreasholdCollection(){
@@ -46,6 +51,21 @@ public class ThreasholdCollection {
 
         return new Threashold(fileType, classType, Float.MAX_VALUE);
     }
+
+//    public List<Threashold> get(FileType fileType){
+//        ArrayList<Threashold> list = collection.get(fileType);
+//
+//        if(list != null)
+//            return list;
+//
+//        return new Threashold(fileType, classType, Float.MAX_VALUE);
+//    }
+
+//    public Threashold[] get(FileType fileType){
+//        ArrayList<Threashold> list = collection.get(fileType);
+//
+//        return (Threashold[])list.toArray();
+//    }
 
     public static void main(String[] args){
 

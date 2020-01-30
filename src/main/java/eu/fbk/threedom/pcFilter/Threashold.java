@@ -17,4 +17,8 @@ public class Threashold {
         this.classType = classType;
         this.value = value;
     }
+
+    public String toString(){
+        return filetype.name() + ":" + classType.name() + ":" + String.valueOf(value);
+    }
 }

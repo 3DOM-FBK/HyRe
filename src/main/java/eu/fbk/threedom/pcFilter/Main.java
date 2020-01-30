@@ -21,7 +21,7 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 1000000;
+    private static final int RANDOM_POINTS_NUMBER = 10000;
     private static final float RANDOM_POINTS_CUBE_SIZE = 100;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class NumberOfReturns PIntensity";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class LIntensity dZVariance ScanAngleRank EchoRatio";
@@ -327,6 +327,12 @@ public class Main {
         File tsfile = new File(filePath + File.separator + "threshold.dat");
         readThreashold(tsfile);
 
+        for(FileType ft : FileType.values()) {
+            System.out.println("..type " + ft.name());
+            for (PointClassification pc : PointClassification.values())
+                System.out.println("....class " + pc.name() + " -> " + tc.get(ft, pc).getValue());
+        }
+
 
         // write the output files
         System.out.println("\noutput");
@@ -353,12 +359,14 @@ public class Main {
             List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
 
             if (!points.isEmpty())
-                for (Point p : points)
-                    if (p.getScore() <= tc.get(FileType.PHOTOGRAMMETRIC, p.getClassification()).getValue()) {
+                for (Point p : points) {
+                    // filter according to the score
+                    if (p.getScore() <= tc.get(ft, p.getClassification()).getValue()) {
                         // SELECT true if you want normalized values
                         bw.write(p.toStringOutput(false, pcf.getMin()) + " " + p.getScore());
                         bw.newLine();
                     }
+                }
 
             Stats.printElapsedTime(start, "file written");
         }
