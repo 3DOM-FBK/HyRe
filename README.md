@@ -1,6 +1,6 @@
 ## READ DATA
 
-```java```
+```java
 voxelSide > 0
 	min bboox(f1, f2)
 
@@ -34,12 +34,11 @@ print runtime statistics
 ```
 
 
-
 ## GENERATE STRUCTURE
-```pseudocode```
+```pseudocode
 voxelSide > 0
 	new VoxelGrid(points)
-```pseudocode```
+```
 
 
 ## SHOW DATA
