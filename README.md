@@ -1,6 +1,6 @@
 ## READ DATA
 
-```java
+```pseudocode
 voxelSide > 0
 	min bboox(f1, f2)
 
