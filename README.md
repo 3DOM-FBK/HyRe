@@ -1,6 +1,6 @@
 ## READ DATA
 
-```pseudocode
+```java
 voxelSide > 0
 	min bboox(f1, f2)
 
@@ -35,14 +35,14 @@ print runtime statistics
 
 
 ## GENERATE STRUCTURE
-```pseudocode
+```java
 voxelSide > 0
 	new VoxelGrid(points)
 ```
 
 
 ## SHOW DATA
-```pseudocode```
+```java
 voxelSide > 0
 	random voxel v
 		for each fileType
@@ -69,11 +69,11 @@ for each filetype
 
 for each filetype
 	show 1 point score
-```pseudocode```
+```
 
 
 ## APPLY FILTER AND WRITE DATA
-```pseudocode```
+```java
 hashmap runtime statistics
 parsing threshold.dat
 
@@ -88,4 +88,4 @@ for each filetype
 		
 		add min to x, y, z
 		write out_f1.txt
-```pseudocode```
+```
