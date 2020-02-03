@@ -80,12 +80,16 @@ public class Point extends Vector3f {
                         String.valueOf(getZ() + min.getZ()) + " "    );
         }
 
+        sb.append(classification.type + " ");
+
         if(normalized)
             for(float prop : propertiesNormValues)
                 sb.append(String.valueOf(prop) + " ");
         else
             for(float prop : propertiesValues)
                 sb.append(String.valueOf(prop) + " ");
+
+        sb.append(score);
 
         return sb.toString();
     }

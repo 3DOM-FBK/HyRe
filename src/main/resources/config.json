@@ -1,0 +1,57 @@
+{
+  "version": [
+    "1",
+    "0",
+    "0"
+  ],
+  "fileTypes": [
+    {
+      "typeId": "0",
+      "name": "photogrammetric",
+      "classTypes": [
+        {
+          "classId": "0",
+          "name": "roof",
+          "threshold": "0.669097",
+          "formula": "PIntensity + ( 1 - NumberOfReturns )"
+        },
+        {
+          "classId": "1",
+          "name": "facade",
+          "threshold": "0.323626",
+          "formula": "PIntensity"
+        },
+        {
+          "classId": "2",
+          "name": "street",
+          "threshold": "0.323626",
+          "formula": "PIntensity"
+        }
+      ]
+    },
+    {
+      "typeId": "1",
+      "name": "lidar",
+      "classTypes": [
+        {
+          "classId": "0",
+          "name": "roof",
+          "threshold": "2.858491803",
+          "formula": "( 1 - LIntensity ) + dZVariance + ( 1 - EchoRatio ) + ScanAngleRank"
+        },
+        {
+          "classId": "1",
+          "name": "facade",
+          "threshold": "4.004490662",
+          "formula": "( 1 - LIntensity ) + dZVariance + ScanAngleRank"
+        },
+        {
+          "classId": "2",
+          "name": "street",
+          "threshold": "2.629350982",
+          "formula": "( 1 - LIntensity ) + dZVariance + ( 1 - EchoRatio ) + ScanAngleRank"
+        }
+      ]
+    }
+  ]
+}

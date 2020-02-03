@@ -12,6 +12,9 @@ import eu.fbk.threedom.structs.LinkedList;
 import eu.fbk.threedom.pcNorm.Main;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -291,6 +294,13 @@ public class PcFilter {
         ///////////////////////////////////////////////
         // normalize all properties values
         ///////////////////////////////////////////////////////
+
+        // load the config file
+        JSONObject config  = eu.fbk.threedom.pcFilter.Main.config;
+        JSONArray fileTypes = config.getJSONArray("fileTypes");
+        JSONObject fileTypeObj = (JSONObject) fileTypes.get(fileType.ordinal());
+        JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
+
         // cycle on points
         n = points.head();
         while(n != null) {
@@ -300,14 +310,6 @@ public class PcFilter {
                 String prop = props[i];
 
                 float val = p.getProp(i);
-                // TODO: for ELEONORA
-                //float val = p.getProp(i) * 1000000;
-
-//                // TODO: range conversion (now manually set here)
-//                if(prop.equalsIgnoreCase("ScanAngleRank")) {
-//                    val = Math.abs(val);
-//                    p.setProp(i, val);
-//                }
 
                 // normalize values between 0 and 1
                 float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
@@ -318,47 +320,75 @@ public class PcFilter {
                     System.out.println("...." + prop + ": " + val + " -> " + norm_val);
             }
 
+            JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
+            String formula = classTypeObj.getString("formula");
 
-            //TODO: commented for ELEONORA
-            float score = 0;
-            if(fileType == FileType.PHOTOGRAMMETRIC) {
-                switch(p.getClassification()) {
-                    case C0:
-                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity")) +
-                                (1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns")));
-                        break;
-                    case C1:
-                    case C2:
-                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity"));
-                        break;
-                    default:
-                        break;
-                }
-            }
+//            System.out.println(".." + p.toString() +
+//                    " type: " + p.getType() +
+//                    " class: " + p.getClassification().ordinal() +
+//                    " formula: " + formula);
 
-            if(fileType == FileType.LIDAR) {
-                switch(p.getClassification()) {
-                    case C0:
-                    case C2:
-                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
-                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
-                                1 - p.getNormProp(getPropertyIndex(fileType, "EchoRatio")) +
-                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
-                        break;
-                    case C1:
-                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
-                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
-                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
-                        break;
-                }
-            }
+//            float score = 0;
+//
+//            if(fileType == FileType.PHOTOGRAMMETRIC) {
+//                switch(p.getClassification()) {
+//                    case C0:
+//                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity")) +
+//                                (1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns")));
+//                        break;
+//                    case C1:
+//                    case C2:
+//                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity"));
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//
+//            if(fileType == FileType.LIDAR) {
+//                switch(p.getClassification()) {
+//                    case C0:
+//                    case C2:
+//                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
+//                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
+//                                1 - p.getNormProp(getPropertyIndex(fileType, "EchoRatio")) +
+//                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
+//                        break;
+//                    case C1:
+//                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
+//                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
+//                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
+//                        break;
+//                }
+//            }
 
-            p.setScore(score);
+            //System.out.println("score olddddddddddd " + score);
+            //p.setScore(score);
+
+            p.setScore(evaluateScore(p, formula));
 
             // exit condition
             if(!n.hasNext() || n.next() == exitNode) break;
             n = n.next();
         }
+    }
+
+
+    public float evaluateScore(Point p, String formula){
+        StringBuilder sb = new StringBuilder();
+
+        for(String str : formula.split(" ")){
+            // if it is a property, retrieve its value
+            if(propsStats.containsKey(str + "_N")) {
+                float value = p.getNormProp(getPropertyIndex(p.getType(), str));
+                sb.append(String.valueOf(value));
+            }else
+                sb.append(str);
+        }
+
+        //System.out.println("formulaa: " + sb);
+
+        return (float)Expression.eval(sb.toString());
     }
 
 
@@ -437,22 +467,5 @@ public class PcFilter {
         }
 
         return sb.toString();
-    }
-
-    static String parseFormula(String formula){
-        // ( 1 - LIntensity ) + dZVariance + ( 1 - EchoRatio ) + ScanAngleRank
-
-        List<String> out = new ArrayList<>();
-
-        String[] token = formula.split( " ");
-
-        for(String s : token){
-            if(s.equalsIgnoreCase("(") || s.equalsIgnoreCase(")"))
-                out.add(s);
-
-
-        }
-
-        return out.toString();
     }
 }

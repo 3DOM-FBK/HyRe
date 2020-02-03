@@ -4,6 +4,9 @@ import eu.fbk.threedom.pc.FileType;
 import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
 import eu.fbk.threedom.utils.Stats;
+import lombok.Getter;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
 
@@ -35,9 +38,9 @@ public class Main {
     private static long start;
     private static long time;
 
-    private ThreasholdCollection tc;
-
     private File outFile1, outFile2;
+
+    public static JSONObject config;
 
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -49,6 +52,7 @@ public class Main {
             parser.parseArgument(args);
 
             DEBUG = verbose;
+            config = null;
 
         } catch( CmdLineException e ) {
             // if there's a problem in the command line,
@@ -106,6 +110,11 @@ public class Main {
                 if(overWrite)
                     System.out.println("..overWrite output file");
         }
+
+        ///////////////////////////////////////////////////////
+        // read the config file
+        File jsonfile = new File(filePath + File.separator + "config.json");
+        readThresholdJson(jsonfile);
 
 
         ///////////////////////////////////////////////////////
@@ -331,17 +340,10 @@ public class Main {
         // collect points (filtering according to threasholds)
         ///////////////////////////////////////////////////////
 
-        // read the threashold file
-        File tsfile = new File(filePath + File.separator + "threshold.dat");
-        readThreashold(tsfile);
-
-        for(FileType ft : FileType.values()) {
-            System.out.println("..type " + ft.name());
-            for (PointClassification pc : PointClassification.values())
-                if(tc.get(ft, pc).getValue() != Float.MAX_VALUE)
-                    System.out.println("....class " + pc.name() + " -> " + tc.get(ft, pc).getValue());
-        }
-
+//        // read the config file
+//        File jsonfile = new File(filePath + File.separator + "config.json");
+//        readThresholdJson(jsonfile);
+        JSONArray fileTypes = config.getJSONArray("fileTypes");
 
         // write the output files
         System.out.println("\noutput");
@@ -351,6 +353,9 @@ public class Main {
 
         for(FileType ft : FileType.values()) {
             start = System.currentTimeMillis();
+
+            JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
+            JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
 
             String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
             //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
@@ -369,10 +374,19 @@ public class Main {
 
             if (!points.isEmpty())
                 for (Point p : points) {
+                    JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
+                    float threshold = classTypeObj.getFloat("threshold");
+                    String formula = classTypeObj.getString("formula");
+
+//                    System.out.println(p.toString() +
+//                            " type: " + p.getType() +
+//                            " class: " + p.getClassification().ordinal() +
+//                            " formula: " + formula);
+
                     // filter according to the score
-                    if (p.getScore() <= tc.get(ft, p.getClassification()).getValue()) {
+                    if (p.getScore() <= threshold) {
                         // SELECT true if you want normalized values
-                        bw.write(p.toStringOutput(false, pcf.getMin()) + " " + p.getScore());
+                        bw.write(p.toStringOutput(false, pcf.getMin()));
                         bw.newLine();
                     }
                 }
@@ -384,53 +398,49 @@ public class Main {
         writer2.close();
     }
 
-    private void readThreashold(File threashold){
-        System.out.println("\nthreashold");
 
-        FileInputStream inputStream = null;
+    public void readThresholdJson(File file){
+        System.out.println("\n..reading " + file.getPath());
+        StringBuilder sb = new StringBuilder();
+        String str = null;
         try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
             start = System.currentTimeMillis();
-            inputStream = new FileInputStream(threashold);
-            System.out.println("..reading " + threashold.getPath());
+            while ((str = reader.readLine()) != null)
+                sb.append(str);
 
-            tc = new ThreasholdCollection();
+            str = sb.toString();
 
-            Scanner sc = new Scanner(inputStream, "UTF-8");
-            String[] token;
-
-            while (sc.hasNextLine()) {
-                ///////////////////////////////////////////////
-                // parse header if present (first row)
-                ///////////////////////////////////////////////////////
-                String line = sc.nextLine();
-
-                // skip every commented line
-                if (line.startsWith("//") || line.isEmpty()) continue;
-
-                token = line.split(":");
-
-                tc.add( FileType.parse(Integer.parseInt(token[0])),
-                        PointClassification.parse(Integer.parseInt(token[1])),
-                        Float.parseFloat(token[2]) );
-            }
-
-            Stats.printElapsedTime(start, "threshold file read");
-        } catch (FileNotFoundException e) {
-            // write a sample
-            System.out.println("..writing an empty threshold template file");
-            File empty_threashold = new File(filePath + File.separator + "threshold.dat");
-            Path outPath = Paths.get(empty_threashold.toURI());
-            try {
-                Files.write(outPath, "//type:class:value".getBytes());
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            this.readThreashold(threashold); //read the file again
-
+            Stats.printElapsedTime(start, "file read");
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        // read the input JSON file
+        config = new JSONObject(str);
+        JSONArray fileTypes = config.getJSONArray("fileTypes");
+
+        for(Object ft : fileTypes) {
+            JSONObject fileType = (JSONObject) ft;
+
+            int typeId = fileType.getInt("typeId");
+            String typeName = fileType.getString("name");
+            System.out.println(".." + typeName + "(" + typeId + ")");
+
+            JSONArray classTypes = fileType.getJSONArray("classTypes");
+
+            for (Object cls : classTypes) {
+                JSONObject classType = (JSONObject) cls;
+
+                int classId = classType.getInt("classId");
+                String className = classType.getString("name");
+                float threshold = classType.getFloat("threshold");
+                String formula = classType.getString("formula");
+                System.out.println("...." + className + "(" + classId + ")\n" + "......" + threshold);
+            }
+        }
     }
+
 
     private void generateRandomData(int numberOfPoints, int type){
         start = System.currentTimeMillis();
