@@ -5,13 +5,13 @@ prepare the output files
 
 read and print the config.json
 
-rnd1.txt & rnd2.txt
+f1==rnd1.txt && f2==rnd2.txt
 	generate random clouds
 
-voxelSide > 0
+voxelSide != 0
 	findMin()
-		bboox(f1, f2)
-		min bboox(f1, f2) // used to convert coordinates
+		bbox(f1, f2)
+		min bbox(f1, f2) // used to convert coordinates
 
 for each filetype
 	parseData()
