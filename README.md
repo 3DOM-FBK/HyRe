@@ -59,49 +59,31 @@ voxelSide != 0
 
 ## SHOW DATA
 ```java
-voxelSide > 0
+voxelSide != 0
 	random voxel v
-		for each fileType
-			getPoints(v)
+	for each fileType
+		getPoints(v) and print points
 
 	evaluate average voxel density
 
 
 print properties statistics
 
-(for each fileType)
-	for each property
-		med, mad
+	(for each fileType)
+		for each property
+			med, mad
 
-(for each fileType)
-	for each property
-		for each class
-			mad, med
-
-
-for each filetype
-	for each point
-		score
-
-for each filetype
-	show 1 point score
+	(for each fileType)
+		for each property
+			for each class
+				mad, med
 ```
-
 
 ## APPLY FILTER AND WRITE DATA
 ```java
-hashmap runtime statistics
-parsing threshold.dat
-
 for each filetype
 	for each point
-		class 0
-			if score > threshold skip
-		class 1
-			if score > threshold skip
-		class 2
-			if score > threshold skip
-
-		add min to x, y, z
-		write out_f1.txt
+		load threshold from config
+			score <= threshold
+				write point to output
 ```

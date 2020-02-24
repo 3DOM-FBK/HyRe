@@ -376,7 +376,7 @@ public class Main {
                 for (Point p : points) {
                     JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
                     float threshold = classTypeObj.getFloat("threshold");
-                    String formula = classTypeObj.getString("formula");
+                    //String formula = classTypeObj.getString("formula");
 
 //                    System.out.println(p.toString() +
 //                            " type: " + p.getType() +
