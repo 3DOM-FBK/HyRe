@@ -28,16 +28,16 @@ for each filetype
 			add points a new point
 
 	updateStatistics()
-	for each point
-		for each property prop
-			evaluate prop_std
+		for each point
+			for each property prop
+				evaluate prop_std
 
-	for each point
-		for each property prop
-			normalize [0:1] prop
+		for each point
+			for each property prop
+				normalize [0:1] prop
 
-		load formula from config
-		evaluate and set score
+			load formula from config
+			evaluate and set score
 
 print runtime statistics
 
