@@ -233,7 +233,7 @@ public class PcFilter {
                         val = Math.abs(val);
                     }
 
-                    // add the value inside the point properies array
+                    // add the value inside the point properties array
                     p.setProp(t, val);
 
                     // update sum and arithmetic mean
