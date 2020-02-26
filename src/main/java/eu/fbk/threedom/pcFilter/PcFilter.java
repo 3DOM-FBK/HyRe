@@ -207,7 +207,7 @@ public class PcFilter {
                             Integer.parseInt(token[5]));
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[6].substring(0, 1))));
 
-                    // X Y Z Class
+                // X Y Z Class
                 } else if (fileType == FileType.LIDAR) {
                     p = new Point(
                             fileType,

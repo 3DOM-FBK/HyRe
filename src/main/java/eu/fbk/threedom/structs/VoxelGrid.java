@@ -21,6 +21,8 @@ public class VoxelGrid {
 
     private List<Set<Integer>> voxelsList;
 
+    @Setter @Getter private HashMap<String, Float> propsStats;
+
 
     public VoxelGrid(LinkedList points, BBox bbox, float voxelSide){
         this.bbox = bbox;

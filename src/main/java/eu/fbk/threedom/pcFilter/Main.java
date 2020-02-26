@@ -147,35 +147,38 @@ public class Main {
             // postprocessing statistics
             ///////////////////////////////////////////////////////
 
-            // POINT BELONGING TO A SPECIFIC VOXEL
-            System.out.println("\n\nPOST-PROCESSING STATISTICS");
+//            // POINT BELONGING TO A SPECIFIC VOXEL
+//            System.out.println("\n\nPOST-PROCESSING STATISTICS");
+//
+//            for (FileType ft : FileType.values()) {
+//                start = System.currentTimeMillis();
+//                System.out.println("\n" + ft.name() + " cloud");
+//                System.out.println("..random voxel -> " + i);
+//
+//                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
+//                if (pointList != null)
+//                    if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
+//                    else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
+//
+//                for (PointClassification pc : PointClassification.values()) {
+//                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+//                    if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
+//
+//                }
+//                Stats.printElapsedTime(start, "processed");
+//            }
 
-
-            for (FileType ft : FileType.values()) {
-                start = System.currentTimeMillis();
-                System.out.println("\n" + ft.name() + " cloud");
-                System.out.println("..random voxel -> " + i);
-
-                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
-                if (pointList != null)
-                    if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
-                    else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
-
-                for (PointClassification pc : PointClassification.values()) {
-                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
-                    if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
-
-                }
-                Stats.printElapsedTime(start, "processed");
-            }
-
+            ///////////////////////////////////////////////////////
             // AVERAGE VOXEL DENSITY
             int numberOfPointsInVoxel_sum;
+
             // cycle on photogrammetry/lidar file
             for (FileType ft : FileType.values()) {
                 start = System.currentTimeMillis();
                 System.out.println("\n" + ft.name() + " cloud");
 
+                ///////////////////////////////////////////////////////
+                // AVERAGE VOXEL DENSITY (PER CLASS)
                 // cycle on roof/facade/street point types
                 for (PointClassification pc : PointClassification.values()) {
                     numberOfPointsInVoxel_sum = 0;
@@ -188,19 +191,76 @@ public class Main {
                     else
                         System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
 
-                    // cycle on voxel
+                    // cycle on voxel to evaluate mean
                     for (int v : voxelSet) {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
                         numberOfPointsInVoxel_sum += pointList.size();
                         if (Main.DEBUG) {
-                            System.out.println("..voxel " + v);//+ " " + pointList);
-                            for (Point p : pointList) System.out.println("...." + p.toString());
+                            System.out.println("....voxel " + v);//+ " " + pointList);
+                            for (Point p : pointList) System.out.println("......" + p.toString());
                         }
                     }
-                    System.out.println("..mean of voxel point density " + (numberOfPointsInVoxel_sum / voxelSet.size()));
+                    float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
+                    System.out.println("....mean of voxel point density " + mean);
+
+                    // cycle on voxel to evaluate std
+                    float std = 0;
+                    for (int v : voxelSet) {
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
+//                        numberOfPointsInVoxel_sum += pointList.size();
+
+                        std =  (float)Math.pow((pointList.size() - mean), 2);
+//                        if (Main.DEBUG) {
+//                            System.out.println("....voxel " + v);//+ " " + pointList);
+//                            for (Point p : pointList) System.out.println("......" + p.toString());
+//                        }
+                    }
+                    std = (float)Math.sqrt(std / voxelSet.size());
+                    System.out.println("....std of voxel point density " + std);
                 }
                 Stats.printElapsedTime(start, "processed");
+
+
+                ///////////////////////////////////////////////////////
+                // AVERAGE VOXEL DENSITY
+                start = System.currentTimeMillis();
+                Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft);
+                if(voxelSet == null) continue;
+
+                if (Main.DEBUG)
+                    System.out.println("..points are contained in voxels " + voxelSet);
+
+                numberOfPointsInVoxel_sum = 0;
+
+                // cycle on voxel to evaluate mean
+                for (int v : voxelSet) {
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+
+                    numberOfPointsInVoxel_sum += pointList.size();
+                    if (Main.DEBUG) {
+                        System.out.println("..voxel " + v);//+ " " + pointList);
+                        for (Point p : pointList) System.out.println("...." + p.toString());
+                    }
+                }
+                float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
+                System.out.println("..mean of voxel point density " + mean);
+
+                // cycle on voxel to evaluate std
+                float std = 0;
+                for (int v : voxelSet) {
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
+
+                    std =  (float)Math.pow((pointList.size() - mean), 2);
+//                    numberOfPointsInVoxel_sum += pointList.size();
+//                    if (Main.DEBUG) {
+//                        System.out.println("..voxel " + v);//+ " " + pointList);
+//                        for (Point p : pointList) System.out.println("...." + p.toString());
+//                    }
+                }
+                std = (float)Math.sqrt(std / voxelSet.size());
+                System.out.println("..std of voxel point density " + std);
             }
+            Stats.printElapsedTime(start, "processed");
         }
 
 
@@ -400,7 +460,7 @@ public class Main {
 
 
     public void readThresholdJson(File file){
-        System.out.println("\n..reading " + file.getPath());
+        System.out.println("\nreading " + file.getPath());
         StringBuilder sb = new StringBuilder();
         String str = null;
         try {
@@ -443,6 +503,7 @@ public class Main {
 
 
     private void generateRandomData(int numberOfPoints, int type){
+        System.out.println("\ngenerating random cloud file");
         start = System.currentTimeMillis();
 
         List<String> randomIn = new ArrayList<>();
@@ -499,7 +560,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        Stats.printElapsedTime(start, "..random cloud generated and written in " + fileName);
+        Stats.printElapsedTime(start, "processed " + fileName);
     }
 
 

@@ -57,51 +57,6 @@ public class PcNorm {
         });
     }
 
-    public Point findMin(File[] data){
-        System.out.println("\nfinding boundingBox..");
-
-        //BBox bbox = new BBox();
-        FileInputStream inputStream = null;
-
-        start = System.currentTimeMillis();
-
-        for(File f : data) {
-            try {
-                inputStream = new FileInputStream(f);
-
-                Scanner sc = new Scanner(inputStream, "UTF-8");
-                String line; // header
-
-                while (sc.hasNextLine()) {
-                    line = sc.nextLine();
-                    if (line.startsWith("//") || line.isEmpty() || line == null) continue;
-
-                    String[] token = line.split(" ");
-
-                    point.move(Float.parseFloat(token[0]),
-                            Float.parseFloat(token[1]),
-                            Float.parseFloat(token[2]));
-
-                    bbox.extendTo(point);
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        Stats.printElapsedTime(start, "bounding box min is " + bbox.getMin().toString());
-
-        return bbox.getMin();
-    }
-
-    public int getPropertyIndex(String prop){
-
-        for(int i=0; i<properties.length; i++)
-            if(properties[i].equalsIgnoreCase(prop)) return i;
-
-        return -1;
-    }
-
 
     public void parseData(File data, FileType fileType) {
         System.out.println("\nparse file " + data.getName());
@@ -296,8 +251,4 @@ public class PcNorm {
 
         return list;
     }
-
-//    public String toString(){
-//
-//    }
 }
