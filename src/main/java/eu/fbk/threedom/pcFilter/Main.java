@@ -180,20 +180,20 @@ public class Main {
                 ///////////////////////////////////////////////////////
                 // AVERAGE VOXEL DENSITY (PER CLASS)
                 // cycle on roof/facade/street point types
-                for (PointClassification pc : PointClassification.values()) {
+                for (PointClassification pclass : PointClassification.values()) {
                     numberOfPointsInVoxel_sum = 0;
-                    Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+                    Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pclass);
 
                     if(voxelSet == null) continue;
 
                     if (Main.DEBUG)
-                        System.out.println(".." + pc.name() + " points are contained in voxels " + voxelSet);
+                        System.out.println(".." + pclass.name() + " points are contained in voxels " + voxelSet);
                     else
-                        System.out.println(".." + pc.name() + " points contained in " + voxelSet.size() + " voxels ");
+                        System.out.println(".." + pclass.name() + " points contained in " + voxelSet.size() + " voxels ");
 
                     // cycle on voxel to evaluate mean
                     for (int v : voxelSet) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
                         numberOfPointsInVoxel_sum += pointList.size();
                         if (Main.DEBUG) {
                             System.out.println("....voxel " + v);//+ " " + pointList);
@@ -206,10 +206,10 @@ public class Main {
                     // cycle on voxel to evaluate std
                     float std = 0;
                     for (int v : voxelSet) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
 //                        numberOfPointsInVoxel_sum += pointList.size();
 
-                        std =  (float)Math.pow((pointList.size() - mean), 2);
+                        std +=  (float)Math.pow((pointList.size() - mean), 2);
 //                        if (Main.DEBUG) {
 //                            System.out.println("....voxel " + v);//+ " " + pointList);
 //                            for (Point p : pointList) System.out.println("......" + p.toString());
@@ -250,7 +250,7 @@ public class Main {
                 for (int v : voxelSet) {
                     pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
 
-                    std =  (float)Math.pow((pointList.size() - mean), 2);
+                    std +=  (float)Math.pow((pointList.size() - mean), 2);
 //                    numberOfPointsInVoxel_sum += pointList.size();
 //                    if (Main.DEBUG) {
 //                        System.out.println("..voxel " + v);//+ " " + pointList);

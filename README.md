@@ -1,6 +1,7 @@
 ## READ DATA
 
 ```java
+Main()
 prepare the output files
 
 read and print the config.json
@@ -8,7 +9,9 @@ read and print the config.json
 f1==rnd1.txt && f2==rnd2.txt
 	generate random clouds
 
+PcFilter()
 voxelSide != 0
+
 	findMin()
 		bbox(f1, f2)
 		min bbox(f1, f2) // used to convert coordinates
@@ -30,7 +33,10 @@ for each filetype
 	updateStatistics()
 		for each point
 			for each property prop
-				evaluate prop_std
+                std = pow((prop.val - prop_mean), 2)
+                prop_std += std
+
+        prop_std = sqrt(prop_std / prop_N)
 
 		for each point
 			for each property prop
@@ -46,6 +52,7 @@ print runtime statistics
 
 ## GENERATE VOXEL STRUCTURE
 ```java
+VoxelGrid()
 voxelSide != 0
 	new VoxelGrid(points, bbox, voxelSide)
 
@@ -59,12 +66,33 @@ voxelSide != 0
 
 ## SHOW DATA
 ```java
+Main()
 voxelSide != 0
-	random voxel v
-	for each fileType
-		getPoints(v) and print points
+	//random voxel v
+	//for each fileType
+	//	getPoints(v) and print points
 
-	evaluate average voxel density
+    for each fileType
+        //evaluate average per class voxel density
+        for each class
+            getVoxels(fileType, class)
+            for each voxel
+                npointsInVoxel += pointsInVoxel.size
+            mean = pointsInVoxel / voxels
+
+            for each voxel
+                std = pow((pointsInVoxel.size - mean, 2)
+            std = sqrt(pointsInVoxel / voxels)
+
+        //evaluate average voxel density
+        getVoxels(fileType)
+        for each voxel
+            npointsInVoxel += pointsInVoxel.size
+        mean = pointsInVoxel / voxels
+
+        for each voxel
+            std = pow((pointsInVoxel.size - mean, 2)
+        std = sqrt(pointsInVoxel / voxels)
 
 
 print properties statistics
