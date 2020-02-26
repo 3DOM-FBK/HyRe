@@ -140,9 +140,9 @@ public class Main {
             ///////////////////////////////////////////////////////
             // pick a random voxel to filter
             ///////////////////////////////////////////////////////
-            Random rnd = new Random();
-            int vGridSize = pcf.getVGrid().getSize();
-            int i = rnd.nextInt(vGridSize);
+//            Random rnd = new Random();
+//            int vGridSize = pcf.getVGrid().getSize();
+//            int i = rnd.nextInt(vGridSize);
 
             ///////////////////////////////////////////////////////
             // postprocessing statistics
@@ -198,7 +198,7 @@ public class Main {
                         numberOfPointsInVoxel_sum += pointList.size();
                         if (Main.DEBUG) {
                             System.out.println("....voxel " + v);//+ " " + pointList);
-                            for (Point p : pointList) System.out.println("......" + p.toString());
+                            for (Point p : pointList) System.out.println("......" + p.toString(pcf.getMin()));
                         }
                     }
                     float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
@@ -208,13 +208,7 @@ public class Main {
                     float std = 0;
                     for (int v : voxelSet) {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
-//                        numberOfPointsInVoxel_sum += pointList.size();
-
                         std +=  (float)Math.pow((pointList.size() - mean), 2);
-//                        if (Main.DEBUG) {
-//                            System.out.println("....voxel " + v);//+ " " + pointList);
-//                            for (Point p : pointList) System.out.println("......" + p.toString());
-//                        }
                     }
                     std = (float)Math.sqrt(std / voxelSet.size());
                     System.out.println("....std of voxel point density " + std);
@@ -240,7 +234,7 @@ public class Main {
                     numberOfPointsInVoxel_sum += pointList.size();
                     if (Main.DEBUG) {
                         System.out.println("..voxel " + v);//+ " " + pointList);
-                        for (Point p : pointList) System.out.println("...." + p.toString());
+                        for (Point p : pointList) System.out.println("...." + p.toString(pcf.getMin()));
                     }
                 }
                 float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
@@ -250,13 +244,7 @@ public class Main {
                 float std = 0;
                 for (int v : voxelSet) {
                     pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
-
                     std +=  (float)Math.pow((pointList.size() - mean), 2);
-//                    numberOfPointsInVoxel_sum += pointList.size();
-//                    if (Main.DEBUG) {
-//                        System.out.println("..voxel " + v);//+ " " + pointList);
-//                        for (Point p : pointList) System.out.println("...." + p.toString());
-//                    }
                 }
                 std = (float)Math.sqrt(std / voxelSet.size());
                 System.out.println("..std of voxel point density " + std);

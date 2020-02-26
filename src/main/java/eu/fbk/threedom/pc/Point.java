@@ -122,15 +122,9 @@ public class Point extends Vector3f {
         return sb.toString();
     }
 
-    public String toString(){
-        return "point(" + x + ", " + y + ", " + z + ")";
-    }
-
-    public String toString(boolean rgb){
-        if(rgb)
-            return "point(" + x + ", " + y + ", " + z + "), rgb " + r + ":"+ g + ":" + b;
-
-        return toString();
+    public String toString(Point min){
+        return "point(" + (x + min.getX()) + ", " + (y + min.getY()) + ", "
+                + (z + min.getZ()) + ")";
     }
 
 //    public void setProp(String property, Float value){
