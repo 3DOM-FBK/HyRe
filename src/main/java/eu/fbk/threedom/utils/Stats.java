@@ -2,6 +2,8 @@ package eu.fbk.threedom.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Stats {
 
@@ -22,6 +24,18 @@ public class Stats {
             sum += f;
 
         return sum / (float)n;
+    }
+
+    // Generic function to convert an Array to Set
+    public static <T> Set<T> convertArrayToSet(T array[])
+    {
+
+        // Create the Set by passing the Array
+        // as parameter in the constructor
+        Set<T> set = new HashSet<>(Arrays.asList(array));
+
+        // Return the converted Set
+        return set;
     }
 
     // Function for calculating median

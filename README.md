@@ -94,6 +94,10 @@ voxelSide != 0
             std = pow((pointsInVoxel.size - mean, 2)
         std = sqrt(pointsInVoxel / voxels)
 
+    for each fileType
+        find intersection getVoxels(fileType)
+    print count voxels in intersection set
+
 
 print properties statistics
 

@@ -133,6 +133,36 @@ public class VoxelGrid {
         return voxels[key] = v;
     }
 
+    public List<Point> getPoints(FileType fileType){
+        Set voxelSet = getVoxels(fileType);
+        List<Point> list = new ArrayList<>();
+
+        for(Object v : voxelSet)
+            list.addAll(getPoints(fileType, (int)v));
+
+        return list;
+    }
+
+    public List<Point> getPoints(int voxelId){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            list.add(p);
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
     /**
      *
      * @param fileType defines if it is a photogrammetric point (0) or a lidar point
@@ -156,16 +186,6 @@ public class VoxelGrid {
             if(!n.hasNext() || n == vox.getTail()) break;
             n = n.next();
         }
-
-        return list;
-    }
-
-    public List<Point> getPoints(FileType fileType){
-        Set voxelSet = getVoxels(fileType);
-        List<Point> list = new ArrayList<>();
-
-        for(Object v : voxelSet)
-            list.addAll(getPoints(fileType, (int)v));
 
         return list;
     }
@@ -211,6 +231,26 @@ public class VoxelGrid {
         }
 
         return count;
+    }
+
+    public Set<Integer> getVoxels(FileType[] fileTypes){
+        Set voxelsSet = new LinkedHashSet<Integer>();
+
+        for(FileType ft : fileTypes) {
+            if (ft == FileType.PHOTOGRAMMETRIC) {
+                voxelsSet.addAll(voxelsList.get(0));
+                voxelsSet.addAll(voxelsList.get(1));
+                voxelsSet.addAll(voxelsList.get(2));
+            }
+
+            if (ft == FileType.LIDAR) {
+                voxelsSet.addAll(voxelsList.get(3));
+                voxelsSet.addAll(voxelsList.get(4));
+                voxelsSet.addAll(voxelsList.get(5));
+            }
+        }
+
+        return voxelsSet;
     }
 
     public Set<Integer> getVoxels(FileType fileType){

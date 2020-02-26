@@ -3,6 +3,7 @@ package eu.fbk.threedom.pcFilter;
 import eu.fbk.threedom.pc.FileType;
 import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
+import eu.fbk.threedom.structs.Voxel;
 import eu.fbk.threedom.utils.Stats;
 import lombok.Getter;
 import org.json.JSONArray;
@@ -261,6 +262,31 @@ public class Main {
                 System.out.println("..std of voxel point density " + std);
             }
             Stats.printElapsedTime(start, "processed");
+
+
+            ///////////////////////////////////////////////////////
+            // PHOTO/LIDAR IN EACH VOXEL
+//            Set<Integer> voxelSetPhoto = pcf.getVGrid().getVoxels(FileType.PHOTOGRAMMETRIC);
+//            Set<Integer> voxelSetLidar = pcf.getVGrid().getVoxels(FileType.LIDAR);
+//
+//            // intersection of sets
+//            Set<Integer> intersection = new HashSet<Integer>(voxelSetPhoto);
+//            intersection.retainAll(voxelSetLidar);
+
+
+            // initialize with all the voxels
+            Set<Integer> intersectionSet = pcf.getVGrid().getVoxels( new FileType[] {FileType.PHOTOGRAMMETRIC,FileType.LIDAR} );
+            // cycle on photogrammetry/lidar file and find the intersection
+            for (FileType ft : FileType.values())
+                intersectionSet.retainAll(pcf.getVGrid().getVoxels(ft));
+
+            System.out.println("\nphoto/lidar voxels sets intersection set " + intersectionSet.toString());
+            System.out.println("count: " + intersectionSet.size());
+
+            for (int v : intersectionSet) {
+                System.out.println("..voxel " + v);
+                //System.out.println("....points " + pcf.getVGrid().getPoints(v));
+            }
         }
 
 
