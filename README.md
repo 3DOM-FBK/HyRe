@@ -81,8 +81,8 @@ voxelSide != 0
             mean = pointsInVoxel / voxels
 
             for each voxel
-                std = pow((pointsInVoxel.size - mean, 2)
-            std = sqrt(pointsInVoxel / voxels)
+                std += pow((pointsInVoxel.size - mean, 2)
+            std = sqrt(std / voxels)
 
         //evaluate average voxel density
         getVoxels(fileType)
@@ -91,9 +91,10 @@ voxelSide != 0
         mean = pointsInVoxel / voxels
 
         for each voxel
-            std = pow((pointsInVoxel.size - mean, 2)
-        std = sqrt(pointsInVoxel / voxels)
+            std += pow((pointsInVoxel.size - mean, 2)
+        std = sqrt(std / voxels)
 
+    // find the set of voxels that contains both lidar and photo points
     for each fileType
         find intersection getVoxels(fileType)
     print count voxels in intersection set
