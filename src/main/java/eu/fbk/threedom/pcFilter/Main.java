@@ -150,7 +150,7 @@ public class Main {
             // postprocessing statistics
             ///////////////////////////////////////////////////////
 
-//            // POINT BELONGING TO A SPECIFIC VOXEL
+//            // POINT BELONGING TO SPECIFIC VOXEL
 //            System.out.println("\n\nPOST-PROCESSING STATISTICS");
 //
 //            for(int i=0; i < pcf.getVGrid().getSize(); i++) {
@@ -221,7 +221,7 @@ public class Main {
                         numberOfPointsInVoxel_sum += pointList.size();
                         if (Main.DEBUG) {
                             System.out.println("....voxel " + v);//+ " " + pointList);
-                            for (Point p : pointList) System.out.println("......" + p.toString());
+                            for (Point p : pointList) System.out.println("......" + p.toString(pcf.getCoordShift()));
                         }
                     }
                     float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
@@ -252,7 +252,7 @@ public class Main {
                 if(voxelSet == null) continue;
 
                 if (Main.DEBUG)
-                    System.out.println("..points are contained in voxels " + voxelSet);
+                    System.out.println("\n..points are contained in voxels " + voxelSet);
 
                 numberOfPointsInVoxel_sum = 0;
 
@@ -263,7 +263,7 @@ public class Main {
                     numberOfPointsInVoxel_sum += pointList.size();
                     if (Main.DEBUG) {
                         System.out.println("..voxel " + v);//+ " " + pointList);
-                        for (Point p : pointList) System.out.println("...." + p.toString());
+                        for (Point p : pointList) System.out.println("...." + p.toString(pcf.getCoordShift()));
                     }
                 }
                 float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
@@ -285,7 +285,7 @@ public class Main {
 
 
             ///////////////////////////////////////////////////////
-            // PHOTO/LIDAR IN EACH VOXEL
+            // PHOTO/LIDAR INTERSECTION IN EACH VOXEL
 //            Set<Integer> voxelSetPhoto = pcf.getVGrid().getVoxels(FileType.PHOTOGRAMMETRIC);
 //            Set<Integer> voxelSetLidar = pcf.getVGrid().getVoxels(FileType.LIDAR);
 //
@@ -319,47 +319,82 @@ public class Main {
 
             ///////////////////////////////////////////////////////
             // MULTICLASS IN EACH INTERSECTION VOXEL
+            List<Integer> c0_c1 = new ArrayList();
+            List<Integer> c0_c2 = new ArrayList();
+            List<Integer> c1_c2 = new ArrayList();
+            List<Integer> c0_c1_c2 = new ArrayList();
+
             // cycle on photogrammetry/lidar file
             for (FileType ft : FileType.values()) {
-                List<Integer> c0_c1 = new ArrayList();
-                List<Integer> c0_c2 = new ArrayList();
-                List<Integer> c1_c2 = new ArrayList();
+                c0_c1.clear();
+                c0_c2.clear();
+                c1_c2.clear();
 
                 for( int v : intersectionSet) {
                     List<Point> points = pcf.getVGrid().getPoints(ft, v);
 
-                    for(Point p : points)
-                        System.out.println("++++++++++++++++" + p.toString(pcf.getCoordShift()));
+//                    for(Point p : points)
+//                        System.out.println("++++++++++++++++" + p.toString(pcf.getCoordShift()) + ", c " + p.getClassification().ordinal());
 
                     boolean c0 = false, c1 = false, c2 = false;
                     for(Point p : points){
                         if(p.getClassification().ordinal() == 0) c0 = true;
                         if(p.getClassification().ordinal() == 1) c1 = true;
-                        if(c0 && c1) c0_c1.add(v);
-                        break;
+                        if(c0 && c1) {
+                            c0_c1.add(v);
+                            //System.out.println("..c0_c1");
+                            break;
+                        }
                     }
 
-                    points.clear();
-                    c0 = false;
+                    //points.clear();
+                    c0 = false; c1 = false; c2 = false;
                     for(Point p : points){
                         if(p.getClassification().ordinal() == 0) c0 = true;
                         if(p.getClassification().ordinal() == 2) c2 = true;
-                        if(c0 && c2) c0_c2.add(v);
-                        break;
+                        if(c0 && c2) {
+                            //System.out.println("..c0_c2");
+                            c0_c2.add(v);
+                            break;
+                        }
                     }
 
-                    points.clear();
-                    c1 = false; c2 = false;
+                    //points.clear();
+                    c0 = false; c1 = false; c2 = false;
                     for(Point p : points){
                         if(p.getClassification().ordinal() == 1) c1 = true;
                         if(p.getClassification().ordinal() == 2) c2 = true;
-                        if(c1 && c2) c1_c2.add(v);
-                        break;
+                        if(c1 && c2) {
+                            //System.out.println("..c1_c2");
+                            c1_c2.add(v);
+                            break;
+                        }
+                    }
+
+                    //points.clear();
+                    c0 = false; c1 = false; c2 = false;
+                    for(Point p : points){
+                        if(p.getClassification().ordinal() == 0) c0 = true;
+                        if(p.getClassification().ordinal() == 1) c1 = true;
+                        if(p.getClassification().ordinal() == 2) c2 = true;
+                        if(c0 && c1 && c2) {
+                            //System.out.println("..c0_c1_c2");
+                            c0_c1_c2.add(v);
+                            break;
+                        }
                     }
                 }
-                System.out.println("\nc0_c1 (" + ft + "): " + c0_c1.size());
-                System.out.println("c0_c2 (" + ft + "): " + c0_c2.size());
-                System.out.println("c1_c2 (" + ft + "): " + c1_c2.size());
+
+                System.out.println("...." + ft + " cloud");
+                if(c0_c1.size() > 0) System.out.println("......c0/c1");
+                if(c0_c2.size() > 0) System.out.println("......c0/c2");
+                if(c1_c2.size() > 0) System.out.println("......c1/c2");
+                if(c0_c1_c2.size() > 0) System.out.println("......c0/c1/c2");
+
+//                System.out.println("\nc0_c1 (" + ft + "): " + c0_c1.size());
+//                System.out.println("c0_c2 (" + ft + "): " + c0_c2.size());
+//                System.out.println("c1_c2 (" + ft + "): " + c1_c2.size());
+//                System.out.println("c0_c1_c2 (" + ft + "): " + c0_c1_c2.size());
             }
         }
 
