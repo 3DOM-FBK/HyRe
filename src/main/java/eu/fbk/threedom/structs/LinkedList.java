@@ -89,6 +89,13 @@ public class LinkedList implements LinkedListInterface {
     }
 
     public static void main(String[]args){
+
+        double a = 1.3;
+        System.out.println((int)(a+0.5));
+        a = 1.7;
+        System.out.println((int)(a+0.5));
+        System.exit(1);
+
         LinkedList ll = new LinkedList();
 
 //        // add at beginning and print

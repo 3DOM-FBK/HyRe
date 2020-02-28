@@ -104,12 +104,18 @@ public class VoxelGrid {
      * @return
      */
     public int getVoxelId(float x, float y, float z) {
-//        int xv = (int) ((x - bbox.getMin().x) /voxelSide);
-//        int yv = (int) ((y - bbox.getMin().y) /voxelSide);
-//        int zv = (int) ((z - bbox.getMin().z) /voxelSide);
-        int xv = (int) (x / voxelSide);
-        int yv = (int) (y / voxelSide);
-        int zv = (int) (z / voxelSide);
+//        int xv = (int) (((x - bbox.getMin().x) / voxelSide)+0.5);
+//        int yv = (int) (((y - bbox.getMin().y) / voxelSide)+0.5);
+//        int zv = (int) (((z - bbox.getMin().z) / voxelSide)+0.5);
+
+        int xv = (int) (( (x - bbox.getMin().x + (bbox.getMin().x - (int)(bbox.getMin().x/voxelSide)*voxelSide)) / voxelSide));
+        int yv = (int) (( (y - bbox.getMin().y + (bbox.getMin().y - (int)(bbox.getMin().y/voxelSide)*voxelSide)) / voxelSide));
+        int zv = (int) (( (z - bbox.getMin().z + (bbox.getMin().z - (int)(bbox.getMin().z/voxelSide)*voxelSide)) / voxelSide));
+
+        System.out.println("?????????????????????????? " + xv + ", " + yv + ", " + zv);
+//        int xv = (int) (x / voxelSide);
+//        int yv = (int) (y / voxelSide);
+//        int zv = (int) (z / voxelSide);
         int key = id(xv, yv, zv);
         //System.out.println("key: " + key);
         if (key < 0 || key >= size) return -1;

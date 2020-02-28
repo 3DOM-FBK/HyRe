@@ -53,7 +53,8 @@ public class PcFilter {
         point = new Point(0, 0, 0);
         File[] data = {file1Data, file2Data};
 
-        min = (voxelSide != 0) ? findMin(data) : new Point(0, 0,0);
+        min = (voxelSide != 0) ? findMin(data) : new Point(0, 0, 0);
+
 
         //////////////////////////////
         // parse PHOTOGRAMMETRIC file
@@ -205,9 +206,9 @@ public class PcFilter {
                 // X Y Z R G B Class
                 if (fileType == FileType.PHOTOGRAMMETRIC) {
                     p = new Point(
-                            fileType, Float.parseFloat(token[0]) - this.min.getX(), // x
-                            Float.parseFloat(token[1]) - this.min.getY(), // y
-                            Float.parseFloat(token[2]) - this.min.getZ(), // z
+                            fileType, Float.parseFloat(token[0]), //- this.min.getX(), // x
+                            Float.parseFloat(token[1]), //- this.min.getY(), // y
+                            Float.parseFloat(token[2]), //- this.min.getZ(), // z
                             Integer.parseInt(token[3]),
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
@@ -217,9 +218,9 @@ public class PcFilter {
                 } else if (fileType == FileType.LIDAR) {
                     p = new Point(
                             fileType,
-                            Float.parseFloat(token[0]) - this.min.getX(),
-                            Float.parseFloat(token[1]) - this.min.getY(),
-                            Float.parseFloat(token[2]) - this.min.getZ());
+                            Float.parseFloat(token[0]), //- this.min.getX(),
+                            Float.parseFloat(token[1]), //- this.min.getY(),
+                            Float.parseFloat(token[2])); //- this.min.getZ());
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[3].substring(0, 1))));
                 }
 

@@ -150,26 +150,42 @@ public class Main {
             // postprocessing statistics
             ///////////////////////////////////////////////////////
 
-//            // POINT BELONGING TO A SPECIFIC VOXEL
-//            System.out.println("\n\nPOST-PROCESSING STATISTICS");
-//
-//            for (FileType ft : FileType.values()) {
-//                start = System.currentTimeMillis();
-//                System.out.println("\n" + ft.name() + " cloud");
-//                System.out.println("..random voxel -> " + i);
-//
-//                pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
-//                if (pointList != null)
-//                    if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
-//                    else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
-//
-//                for (PointClassification pc : PointClassification.values()) {
-//                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
-//                    if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
-//
-//                }
-//                Stats.printElapsedTime(start, "processed");
-//            }
+            // POINT BELONGING TO A SPECIFIC VOXEL
+            System.out.println("\n\nPOST-PROCESSING STATISTICS");
+
+            for(int i=0; i < pcf.getVGrid().getSize(); i++) {
+
+                for (FileType ft : FileType.values()) {
+                    start = System.currentTimeMillis();
+                    System.out.println("\n" + ft.name() + " cloud");
+                    System.out.println("..voxel -> " + i);
+
+                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
+                    if (pointList != null)
+                        if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
+                        else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
+
+                    for (PointClassification pc : PointClassification.values()) {
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+                        if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
+
+                    }
+                    Stats.printElapsedTime(start, "processed");
+                }
+            }
+
+
+
+            System.exit(1);
+
+
+
+
+            ///////////////////////////////////////////////////////
+            // SHOW DATA
+            ///////////////////////////////////////////////////////
+
+
 
             ///////////////////////////////////////////////////////
             // AVERAGE VOXEL DENSITY
@@ -202,7 +218,7 @@ public class Main {
                         numberOfPointsInVoxel_sum += pointList.size();
                         if (Main.DEBUG) {
                             System.out.println("....voxel " + v);//+ " " + pointList);
-                            for (Point p : pointList) System.out.println("......" + p.toString(pcf.getMin()));
+                            for (Point p : pointList) System.out.println("......" + p.toString());
                         }
                     }
                     float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
@@ -244,7 +260,7 @@ public class Main {
                     numberOfPointsInVoxel_sum += pointList.size();
                     if (Main.DEBUG) {
                         System.out.println("..voxel " + v);//+ " " + pointList);
-                        for (Point p : pointList) System.out.println("...." + p.toString(pcf.getMin()));
+                        for (Point p : pointList) System.out.println("...." + p.toString());
                     }
                 }
                 float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
@@ -310,7 +326,7 @@ public class Main {
                     List<Point> points = pcf.getVGrid().getPoints(ft, v);
 
                     for(Point p : points)
-                        System.out.println("++++++++++++++++" + p.toString(pcf.getMin()));
+                        System.out.println("++++++++++++++++" + p.toString());
 
                     boolean c0 = false, c1 = false, c2 = false;
                     for(Point p : points){
