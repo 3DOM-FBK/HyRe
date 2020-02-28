@@ -76,6 +76,12 @@ public class PcFilter {
         // instantiate the voxel grid
         if(voxelSide != 0){
             start = System.currentTimeMillis();
+            //vGrid = new VoxelGrid(points, bbox, this.voxelSide);
+
+//            // modify bbox to comply with translated coordinates
+//            bbox.setMax(bbox.getMax().subPoint(min));
+//            bbox.setMin(point);
+
             vGrid = new VoxelGrid(points, bbox, this.voxelSide);
             Stats.printElapsedTime(start, "..voxel grid created");
         }

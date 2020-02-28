@@ -92,7 +92,7 @@ public class VoxelGrid {
 
 
     public int id(int x, int y, int z) {
-        return x + y * width + z * width*height;
+        return x + (y * width) + (z * width*height);
     }
 
     /**
@@ -117,20 +117,20 @@ public class VoxelGrid {
         return key;
     }
 
-    public Voxel getVoxel(float x, float y, float z) {
-//        int xv = (int) ((x - bbox.getMin().x) /voxelSide);
-//        int yv = (int) ((y - bbox.getMin().y) /voxelSide);
-//        int zv = (int) ((z - bbox.getMin().z) /voxelSide);
-        int xv = (int) (x / voxelSide);
-        int yv = (int) (y / voxelSide);
-        int zv = (int) (z / voxelSide);
-
-        int key = id(xv, yv, zv);
-        //System.out.println("key: " + key);
-        if (key < 0 || key >= size) return null;
-
-        return voxels[key];
-    }
+//    public Voxel getVoxel(float x, float y, float z) {
+////        int xv = (int) ((x - bbox.getMin().x) /voxelSide);
+////        int yv = (int) ((y - bbox.getMin().y) /voxelSide);
+////        int zv = (int) ((z - bbox.getMin().z) /voxelSide);
+//        int xv = (int) (x / voxelSide);
+//        int yv = (int) (y / voxelSide);
+//        int zv = (int) (z / voxelSide);
+//
+//        int key = id(xv, yv, zv);
+//        //System.out.println("key: " + key);
+//        if (key < 0 || key >= size) return null;
+//
+//        return voxels[key];
+//    }
 
     public Voxel getVoxel(int key) {
         return voxels[key];

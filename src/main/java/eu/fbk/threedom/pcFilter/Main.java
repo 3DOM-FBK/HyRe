@@ -43,6 +43,8 @@ public class Main {
 
     public static JSONObject config;
 
+    HashMap<String, Float> voxelDensityStats;
+
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
 
@@ -171,6 +173,8 @@ public class Main {
 
             ///////////////////////////////////////////////////////
             // AVERAGE VOXEL DENSITY
+            voxelDensityStats = new HashMap<>();
+
             int numberOfPointsInVoxel_sum;
 
             // cycle on photogrammetry/lidar file
@@ -201,17 +205,23 @@ public class Main {
                             for (Point p : pointList) System.out.println("......" + p.toString(pcf.getMin()));
                         }
                     }
-                    float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
+                    float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
                     System.out.println("....mean of voxel point density " + mean);
 
                     // cycle on voxel to evaluate std
                     float std = 0;
                     for (int v : voxelSet) {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
-                        std +=  (float)Math.pow((pointList.size() - mean), 2);
+                        std +=  Math.pow((pointList.size() - mean), 2);
                     }
                     std = (float)Math.sqrt(std / voxelSet.size());
                     System.out.println("....std of voxel point density " + std);
+
+                    voxelDensityStats.put(ft.name() + "_" + pclass.name() + "_density_mean", mean);
+                    voxelDensityStats.put(ft.name() + "_" + pclass.name() + "_density_std", std);
+
+//                    System.out.println("C0_density_mean: " + voxelDensityStats.get("C0_density_mean"));
+//                    System.out.println("C0_density_std: " + voxelDensityStats.get("C0_density_std"));
                 }
                 Stats.printElapsedTime(start, "processed");
 
@@ -237,7 +247,7 @@ public class Main {
                         for (Point p : pointList) System.out.println("...." + p.toString(pcf.getMin()));
                     }
                 }
-                float mean = (numberOfPointsInVoxel_sum / voxelSet.size());
+                float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
                 System.out.println("..mean of voxel point density " + mean);
 
                 // cycle on voxel to evaluate std
@@ -248,6 +258,9 @@ public class Main {
                 }
                 std = (float)Math.sqrt(std / voxelSet.size());
                 System.out.println("..std of voxel point density " + std);
+
+                voxelDensityStats.put(ft.name() + "_" + "density_mean", mean);
+                voxelDensityStats.put(ft.name() + "_" + "density_std", std);
             }
             Stats.printElapsedTime(start, "processed");
 
@@ -268,14 +281,70 @@ public class Main {
             for (FileType ft : FileType.values())
                 intersectionSet.retainAll(pcf.getVGrid().getVoxels(ft));
 
-            System.out.println("\nphoto/lidar voxels sets intersection set " + intersectionSet.toString());
-            System.out.println("count: " + intersectionSet.size());
 
-            for (int v : intersectionSet) {
-                System.out.println("..voxel " + v);
-                //System.out.println("....points " + pcf.getVGrid().getPoints(v));
+            // to be deleted
+            intersectionSet.clear();
+            intersectionSet.add(3);
+
+            if(Main.DEBUG)
+                System.out.println("\nphoto/lidar voxels sets intersection set " + intersectionSet.toString());
+            else
+                System.out.println("\nphoto/lidar points are contained in " +
+                        + intersectionSet.size() + " voxels");
+
+            if(Main.DEBUG)
+                for (int v : intersectionSet) {
+                    System.out.println("..voxel " + v);
+                    //System.out.println("....points " + pcf.getVGrid().getPoints(v));
+                }
+
+            ///////////////////////////////////////////////////////
+            // MULTICLASS IN EACH INTERSECTION VOXEL
+            // cycle on photogrammetry/lidar file
+            for (FileType ft : FileType.values()) {
+                List<Integer> c0_c1 = new ArrayList();
+                List<Integer> c0_c2 = new ArrayList();
+                List<Integer> c1_c2 = new ArrayList();
+
+                for( int v : intersectionSet) {
+                    List<Point> points = pcf.getVGrid().getPoints(ft, v);
+
+                    for(Point p : points)
+                        System.out.println("++++++++++++++++" + p.toString(pcf.getMin()));
+
+                    boolean c0 = false, c1 = false, c2 = false;
+                    for(Point p : points){
+                        if(p.getClassification().ordinal() == 0) c0 = true;
+                        if(p.getClassification().ordinal() == 1) c1 = true;
+                        if(c0 && c1) c0_c1.add(v);
+                        break;
+                    }
+
+                    points.clear();
+                    c0 = false;
+                    for(Point p : points){
+                        if(p.getClassification().ordinal() == 0) c0 = true;
+                        if(p.getClassification().ordinal() == 2) c2 = true;
+                        if(c0 && c2) c0_c2.add(v);
+                        break;
+                    }
+
+                    points.clear();
+                    c1 = false; c2 = false;
+                    for(Point p : points){
+                        if(p.getClassification().ordinal() == 1) c1 = true;
+                        if(p.getClassification().ordinal() == 2) c2 = true;
+                        if(c1 && c2) c1_c2.add(v);
+                        break;
+                    }
+                }
+                System.out.println("\nc0_c1 (" + ft + "): " + c0_c1.size());
+                System.out.println("c0_c2 (" + ft + "): " + c0_c2.size());
+                System.out.println("c1_c2 (" + ft + "): " + c1_c2.size());
             }
         }
+
+        System.out.println("\n" + voxelDensityStats.keySet() + "\nsize: " + voxelDensityStats.size());
 
 
 
