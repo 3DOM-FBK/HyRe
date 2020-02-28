@@ -104,18 +104,26 @@ public class VoxelGrid {
      * @return
      */
     public int getVoxelId(float x, float y, float z) {
+//        // old lake version
+//        int xv = (int) (((x - bbox.getMin().x) / voxelSide));
+//        int yv = (int) (((y - bbox.getMin().y) / voxelSide));
+//        int zv = (int) (((z - bbox.getMin().z) / voxelSide));
+
+//        // test from roberto suggestion
 //        int xv = (int) (((x - bbox.getMin().x) / voxelSide)+0.5);
 //        int yv = (int) (((y - bbox.getMin().y) / voxelSide)+0.5);
 //        int zv = (int) (((z - bbox.getMin().z) / voxelSide)+0.5);
 
-        int xv = (int) (( (x - bbox.getMin().x + (bbox.getMin().x - (int)(bbox.getMin().x/voxelSide)*voxelSide)) / voxelSide));
-        int yv = (int) (( (y - bbox.getMin().y + (bbox.getMin().y - (int)(bbox.getMin().y/voxelSide)*voxelSide)) / voxelSide));
-        int zv = (int) (( (z - bbox.getMin().z + (bbox.getMin().z - (int)(bbox.getMin().z/voxelSide)*voxelSide)) / voxelSide));
+        // final (correct?) version
+        // find the coordinates of where to move the min of the bounding box
+        float newBboxMinX = bbox.getMin().x - (int)(bbox.getMin().x/voxelSide) * voxelSide;
+        float newBboxMinY = bbox.getMin().y - (int)(bbox.getMin().y/voxelSide) * voxelSide;
+        float newBboxMinZ = bbox.getMin().z - (int)(bbox.getMin().z/voxelSide) * voxelSide;
 
-        System.out.println("?????????????????????????? " + xv + ", " + yv + ", " + zv);
-//        int xv = (int) (x / voxelSide);
-//        int yv = (int) (y / voxelSide);
-//        int zv = (int) (z / voxelSide);
+        int xv = (int) ( (x - bbox.getMin().x + newBboxMinX) / voxelSide);
+        int yv = (int) ( (y - bbox.getMin().y + newBboxMinY) / voxelSide);
+        int zv = (int) ( (z - bbox.getMin().z + newBboxMinZ) / voxelSide);
+
         int key = id(xv, yv, zv);
         //System.out.println("key: " + key);
         if (key < 0 || key >= size) return -1;
