@@ -150,33 +150,36 @@ public class Main {
             // postprocessing statistics
             ///////////////////////////////////////////////////////
 
-            // POINT BELONGING TO A SPECIFIC VOXEL
-            System.out.println("\n\nPOST-PROCESSING STATISTICS");
-
-            for(int i=0; i < pcf.getVGrid().getSize(); i++) {
-
-                for (FileType ft : FileType.values()) {
-                    start = System.currentTimeMillis();
-                    System.out.println("\n" + ft.name() + " cloud");
-                    System.out.println("..voxel -> " + i);
-
-                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
-                    if (pointList != null)
-                        if (Main.DEBUG) System.out.println("...." + ft.name() + " points " + pointList);
-                        else System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
-
-                    for (PointClassification pc : PointClassification.values()) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
-                        if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
-
-                    }
-                    Stats.printElapsedTime(start, "processed");
-                }
-            }
-
-
-
-            System.exit(1);
+//            // POINT BELONGING TO A SPECIFIC VOXEL
+//            System.out.println("\n\nPOST-PROCESSING STATISTICS");
+//
+//            for(int i=0; i < pcf.getVGrid().getSize(); i++) {
+//
+//                // TODO: temporary do only PHOTOGRAMMETRIC or LIDAR
+//                FileType ft = FileType.PHOTOGRAMMETRIC;
+//                //FileType ft = FileType.LIDAR;
+//                //for (FileType ft : FileType.values()) {
+//                    start = System.currentTimeMillis();
+//                    System.out.println("\n" + ft.name() + " cloud");
+//                    System.out.println("..voxel -> " + i);
+//
+//                    pointList = (ArrayList<Point>) pcf.getPoints(ft, i);
+//                    if (pointList != null)
+//                        if (Main.DEBUG) {
+//                            for(Point p : pointList)
+//                                System.out.println("......" + p.toString(pcf.getCoordShift()));
+//                            //System.out.println("...." + ft.name() + " points " + pointList);
+//                        }else
+//                            System.out.println("...." + ft.name() + ": " + pointList.size() + " points");
+//
+//                    for (PointClassification pc : PointClassification.values()) {
+//                        pointList = (ArrayList<Point>) pcf.getPoints(ft, i, pc);
+//                        if (pointList != null) System.out.println("......" + pc.name() + ": " + pointList.size());
+//
+//                    }
+//                    Stats.printElapsedTime(start, "processed");
+//                //}
+//            }
 
 
 
@@ -326,7 +329,7 @@ public class Main {
                     List<Point> points = pcf.getVGrid().getPoints(ft, v);
 
                     for(Point p : points)
-                        System.out.println("++++++++++++++++" + p.toString());
+                        System.out.println("++++++++++++++++" + p.toString(pcf.getCoordShift()));
 
                     boolean c0 = false, c1 = false, c2 = false;
                     for(Point p : points){
@@ -545,7 +548,7 @@ public class Main {
                     // filter according to the score
                     if (p.getScore() <= threshold) {
                         // SELECT true if you want normalized values
-                        bw.write(p.toStringOutput(false, pcf.getMin()));
+                        bw.write(p.toStringOutput(false, pcf.getCoordShift()));
                         bw.newLine();
                     }
                 }

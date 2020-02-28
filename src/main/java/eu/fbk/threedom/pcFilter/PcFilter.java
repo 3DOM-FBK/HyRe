@@ -32,6 +32,9 @@ public class PcFilter {
     @Setter @Getter private HashMap<String, Float> propsStats;
 
     private static Point point;
+    @Setter @Getter private static Point newBboxMin;
+    @Setter @Getter private static Point coordShift;
+
     @Setter @Getter private static Point min;
 
     // timer
@@ -51,9 +54,31 @@ public class PcFilter {
         //this.dataHm = new HashMap<>();
 
         point = new Point(0, 0, 0);
+        newBboxMin = new Point(0, 0, 0);
         File[] data = {file1Data, file2Data};
 
         min = (voxelSide != 0) ? findMin(data) : new Point(0, 0, 0);
+
+        //System.out.println("&&&&&&&&&&&& BboxMin " + bbox.getMin());
+        //System.out.println("&&&&&&&&&&&& BboxMax " + bbox.getMax());
+
+        //////////////////////////////////////////////////////////
+        // translate the boundingbox to the new position
+        if(voxelSide != 0) {
+            // find the components of the shift vector
+            float vectorShiftX = (int) (min.x / voxelSide) * voxelSide;
+            float vectorShiftY = (int) (min.y / voxelSide) * voxelSide;
+            float vectorShiftZ = (int) (min.z / voxelSide) * voxelSide;
+            coordShift = new Point(vectorShiftX, vectorShiftY, vectorShiftZ);
+
+            // apply the shift vector to the bbox
+            bbox.setMin(bbox.getMin().subPoint(coordShift));
+            bbox.setMax(bbox.getMax().subPoint(coordShift));
+
+            //System.out.println("&&&&&&&&&&&& newBboxMin " + bbox.getMin());
+            //System.out.println("&&&&&&&&&&&& newBboxMax " + bbox.getMax());
+        }
+        //////////////////////////////////////////////////////////
 
 
         //////////////////////////////
@@ -78,10 +103,6 @@ public class PcFilter {
         if(voxelSide != 0){
             start = System.currentTimeMillis();
             //vGrid = new VoxelGrid(points, bbox, this.voxelSide);
-
-//            // modify bbox to comply with translated coordinates
-//            bbox.setMax(bbox.getMax().subPoint(min));
-//            bbox.setMin(point);
 
             vGrid = new VoxelGrid(points, bbox, this.voxelSide);
             Stats.printElapsedTime(start, "..voxel grid created");
@@ -112,6 +133,8 @@ public class PcFilter {
                     point.move(Float.parseFloat(token[0]),
                             Float.parseFloat(token[1]),
                             Float.parseFloat(token[2]));
+
+                    System.out.println(".." + point);
 
                     bbox.extendTo(point);
                 }
@@ -206,21 +229,29 @@ public class PcFilter {
                 // X Y Z R G B Class
                 if (fileType == FileType.PHOTOGRAMMETRIC) {
                     p = new Point(
-                            fileType, Float.parseFloat(token[0]), //- this.min.getX(), // x
-                            Float.parseFloat(token[1]), //- this.min.getY(), // y
-                            Float.parseFloat(token[2]), //- this.min.getZ(), // z
+                            fileType, Float.parseFloat(token[0]),
+                            Float.parseFloat(token[1]) ,
+                            Float.parseFloat(token[2]),
                             Integer.parseInt(token[3]),
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
+                    System.out.println("min " + min);
+                    System.out.println("newBboxMin " + newBboxMin);
+
+                    p.move(p.subPoint(coordShift));
+
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[6].substring(0, 1))));
 
                 // X Y Z Class
                 } else if (fileType == FileType.LIDAR) {
                     p = new Point(
                             fileType,
-                            Float.parseFloat(token[0]), //- this.min.getX(),
-                            Float.parseFloat(token[1]), //- this.min.getY(),
-                            Float.parseFloat(token[2])); //- this.min.getZ());
+                            Float.parseFloat(token[0]),
+                            Float.parseFloat(token[1]) ,
+                            Float.parseFloat(token[2]) );
+
+                    p.move(p.subPoint(coordShift));
+
                     p.setClassification(PointClassification.parse(Integer.parseInt(token[3].substring(0, 1))));
                 }
 

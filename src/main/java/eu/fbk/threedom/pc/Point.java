@@ -62,6 +62,10 @@ public class Point extends Vector3f {
         super.x = x; super.y = y; super.z = z;
     }
 
+    public void move(Point p){
+        super.x = p.x; super.y = p.y; super.z = p.z;
+    }
+
     public String toStringOutput(boolean normalized, Point min){
         StringBuilder sb = new StringBuilder();
 

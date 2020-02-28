@@ -114,15 +114,20 @@ public class VoxelGrid {
 //        int yv = (int) (((y - bbox.getMin().y) / voxelSide)+0.5);
 //        int zv = (int) (((z - bbox.getMin().z) / voxelSide)+0.5);
 
-        // final (correct?) version
+        // mike (correct?) version
         // find the coordinates of where to move the min of the bounding box
-        float newBboxMinX = bbox.getMin().x - (int)(bbox.getMin().x/voxelSide) * voxelSide;
-        float newBboxMinY = bbox.getMin().y - (int)(bbox.getMin().y/voxelSide) * voxelSide;
-        float newBboxMinZ = bbox.getMin().z - (int)(bbox.getMin().z/voxelSide) * voxelSide;
+        float newBboxMinX = bbox.getMin().x - (int)(bbox.getMin().x / voxelSide) * voxelSide;
+        float newBboxMinY = bbox.getMin().y - (int)(bbox.getMin().y / voxelSide) * voxelSide;
+        float newBboxMinZ = bbox.getMin().z - (int)(bbox.getMin().z / voxelSide) * voxelSide;
 
         int xv = (int) ( (x - bbox.getMin().x + newBboxMinX) / voxelSide);
         int yv = (int) ( (y - bbox.getMin().y + newBboxMinY) / voxelSide);
         int zv = (int) ( (z - bbox.getMin().z + newBboxMinZ) / voxelSide);
+
+//        // final version: we move the bounding box at the beginning
+//        int xv = (int) ( x / voxelSide);
+//        int yv = (int) ( y / voxelSide);
+//        int zv = (int) ( z / voxelSide);
 
         int key = id(xv, yv, zv);
         //System.out.println("key: " + key);
@@ -305,17 +310,17 @@ public class VoxelGrid {
     }
 
     public static void main(String[] args){
-        Point p1 = new Point(0, 0, 0);
-        Point p2 = new Point(3, 2, 3);
-
-        LinkedList points = new LinkedList();
-        points.addAtBeginning(p1);
-        points.addAtBeginning(p2);
-
-        BBox bbox = new BBox(p1, p2);
-        System.out.println("\nbbox\n.." + bbox.toString());
-
-        VoxelGrid vg = new VoxelGrid(points, bbox, 1f);
-        System.out.println("\nvoxel id: " + vg.getVoxelId(2.5f, 0.5f, 1.5f));
+//        Point p1 = new Point(0, 0, 0);
+//        Point p2 = new Point(3, 2, 3);
+//
+//        LinkedList points = new LinkedList();
+//        points.addAtBeginning(p1);
+//        points.addAtBeginning(p2);
+//
+//        BBox bbox = new BBox(p1, p2);
+//        System.out.println("\nbbox\n.." + bbox.toString());
+//
+//        VoxelGrid vg = new VoxelGrid(points, bbox, 1f);
+//        System.out.println("\nvoxel id: " + vg.getVoxelId(2.5f, 0.5f, 1.5f));
     }
 }
