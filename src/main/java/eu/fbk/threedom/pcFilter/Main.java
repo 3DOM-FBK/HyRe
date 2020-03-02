@@ -216,15 +216,21 @@ public class Main {
                         System.out.println(".." + pclass.name() + " points contained in " + voxelSet.size() + " voxels ");
 
                     // cycle on voxel to evaluate mean
+                    float mean = 0;
                     for (int v : voxelSet) {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
                         numberOfPointsInVoxel_sum += pointList.size();
+
+                        // filetype_f class_i voxel_v density
+                        voxelDensityStats.put(ft.name() + "_" + pclass.name() + "_v" + v + "_density", (float)pointList.size());
+
                         if (Main.DEBUG) {
                             System.out.println("....voxel " + v);//+ " " + pointList);
                             for (Point p : pointList) System.out.println("......" + p.toString(pcf.getCoordShift()));
                         }
                     }
-                    float mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
+                    if(voxelSet.size() > 0)
+                        mean = (float)numberOfPointsInVoxel_sum / voxelSet.size();
                     System.out.println("....mean of voxel point density " + mean);
 
                     // cycle on voxel to evaluate std
@@ -233,7 +239,8 @@ public class Main {
                         pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
                         std +=  Math.pow((pointList.size() - mean), 2);
                     }
-                    std = (float)Math.sqrt(std / voxelSet.size());
+                    if(voxelSet.size() > 0)
+                        std = (float)Math.sqrt(std / voxelSet.size());
                     System.out.println("....std of voxel point density " + std);
 
                     voxelDensityStats.put(ft.name() + "_" + pclass.name() + "_density_mean", mean);
@@ -300,10 +307,6 @@ public class Main {
             for (FileType ft : FileType.values())
                 intersectionSet.retainAll(pcf.getVGrid().getVoxels(ft));
 
-
-            // to be deleted
-            intersectionSet.clear();
-            intersectionSet.add(3);
 
             if(Main.DEBUG)
                 System.out.println("\nphoto/lidar voxels sets intersection set " + intersectionSet.toString());
@@ -386,22 +389,72 @@ public class Main {
                 }
 
                 System.out.println("...." + ft + " cloud");
-                if(c0_c1.size() > 0) System.out.println("......c0/c1");
-                if(c0_c2.size() > 0) System.out.println("......c0/c2");
-                if(c1_c2.size() > 0) System.out.println("......c1/c2");
-                if(c0_c1_c2.size() > 0) System.out.println("......c0/c1/c2");
+                if(c0_c1.size() > 0) System.out.println("......c0/c1 (" + c0_c1.size() + ")");
+                if(c0_c2.size() > 0) System.out.println("......c0/c2 (" + c0_c2.size() + ")");
+                if(c1_c2.size() > 0) System.out.println("......c1/c2 (" + c1_c2.size() + ")");
+                if(c0_c1_c2.size() > 0) System.out.println("......c0/c1/c2 (" + c0_c1_c2.size() + ")");
 
 //                System.out.println("\nc0_c1 (" + ft + "): " + c0_c1.size());
 //                System.out.println("c0_c2 (" + ft + "): " + c0_c2.size());
 //                System.out.println("c1_c2 (" + ft + "): " + c1_c2.size());
 //                System.out.println("c0_c1_c2 (" + ft + "): " + c0_c1_c2.size());
             }
+
+
+            System.out.println("\n" + voxelDensityStats.keySet() + "\nsize: " + voxelDensityStats.size());
+
+
+            System.out.println("\nphoto/lidar intersection voxels where filetype_f class_i voxel_v density >= filetype_f class_i voxel density mean");
+            Set<Integer> filteredIntersectionSet = intersectionSet;
+
+            for (int v : intersectionSet) {
+                System.out.println("..v " + v);
+
+                boolean passed = false;
+                for (PointClassification pclass : PointClassification.values()) {
+                    System.out.println("...." + pclass);
+
+                    for (FileType ft : FileType.values()) {
+                        System.out.println("......" + ft);
+
+                        float ftClVDensity = 0, ftClVDensityMean = 0;
+                        if (voxelDensityStats.containsKey(ft + "_" + pclass + "_v" + v + "_density"))
+                            ftClVDensity = voxelDensityStats.get(ft + "_" + pclass + "_v" + v + "_density");
+
+                        if (voxelDensityStats.containsKey(ft + "_" + pclass + "_density_mean"))
+                            ftClVDensityMean = voxelDensityStats.get(ft + "_" + pclass + "_density_mean");
+
+                        System.out.println("........ftClVDensity " + ftClVDensity);
+                        System.out.println("........ftClVDensityMean " + ftClVDensityMean);
+
+                        if (ftClVDensityMean == 0 || ftClVDensity < ftClVDensityMean) {
+                            passed = false;
+                            break;
+                        }
+
+                        passed = true;
+
+                        if(!passed) break;
+                    }
+
+                    if(passed){
+                        System.out.println("......passed");
+                        break;
+                    }
+                }
+
+                if(!passed)
+                    filteredIntersectionSet.remove(v);
+            }
+
+            if(Main.DEBUG)
+                System.out.println(".." + filteredIntersectionSet.toString());
+            else
+                System.out.println(".." + filteredIntersectionSet.size() + " voxels");
+
         }
 
-        System.out.println("\n" + voxelDensityStats.keySet() + "\nsize: " + voxelDensityStats.size());
-
-
-
+        System.exit(1);
 
 
 
