@@ -18,6 +18,7 @@ public class Point extends Vector3f {
     @Getter @Setter private PointClassification classification; // 0 1 2
 
     @Getter @Setter private float score;
+    @Getter @Setter private float threshold;
 
     private float[] propertiesValues;
     private float[] propertiesNormValues;

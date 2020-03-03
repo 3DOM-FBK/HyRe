@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
+import sun.reflect.generics.tree.Tree;
 
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
@@ -43,7 +44,9 @@ public class Main {
 
     public static JSONObject config;
 
-    HashMap<String, Float> voxelDensityStats;
+    private HashMap<String, Float> voxelDensityStats;
+
+    private PcFilter pcf;
 
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -91,28 +94,28 @@ public class Main {
         fn1 = FilenameUtils.getBaseName(inFile1.getPath()); //System.out.println("fn1: " + fn1);
         fn2 = FilenameUtils.getBaseName(inFile2.getPath()); //System.out.println("fn2: " + fn2);
 
-        Path out1 = null, out2 = null;
+//        Path out1 = null, out2 = null;
 
-        try {
-            if (outFile == null) {
-                outFile1 = new File(filePath + File.separator + fn1 + "_out.txt");
-                outFile2 = new File(filePath + File.separator + fn2 + "_out.txt");
-            }
-                //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
-            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
-
-            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
-            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
-
-        } catch (FileAlreadyExistsException foee) {
-            if (overWrite == null || !overWrite) {
-                System.out.println("\nWARNING! the output file already exists");
-                System.exit(1);
-            } else
-                System.out.println("\nreading input files");
-                if(overWrite)
-                    System.out.println("..overWrite output file");
-        }
+//        try {
+//            if (outFile == null) {
+//                outFile1 = new File(filePath + File.separator + fn1 + "_out.txt");
+//                outFile2 = new File(filePath + File.separator + fn2 + "_out.txt");
+//            }
+//                //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+//            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
+//
+//            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
+//            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
+//
+//        } catch (FileAlreadyExistsException foee) {
+//            if (overWrite == null || !overWrite) {
+//                System.out.println("\nWARNING! the output file already exists");
+//                System.exit(1);
+//            } else
+//                System.out.println("\nreading input files");
+//                if(overWrite)
+//                    System.out.println("..overWrite output file");
+//        }
 
         ///////////////////////////////////////////////////////
         // read the config file
@@ -133,10 +136,12 @@ public class Main {
         // create the structure
         ///////////////////////////////////////////////////////
         //start = System.currentTimeMillis();
-        PcFilter pcf = new PcFilter(inFile1, inFile2, voxelSide);
+        pcf = new PcFilter(inFile1, inFile2, voxelSide);
         //Stats.printElapsedTime(start, "..voxel grid created");
 
         ArrayList<Point> pointList;
+        Set<Integer> filteredIntersectionSet = null;
+        Set<Integer> scoredFilteredIntersectionSet = new TreeSet<>();
 
         if(voxelSide != 0) {
             ///////////////////////////////////////////////////////
@@ -218,7 +223,7 @@ public class Main {
                     // cycle on voxel to evaluate mean
                     float mean = 0;
                     for (int v : voxelSet) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass, false);
                         numberOfPointsInVoxel_sum += pointList.size();
 
                         // filetype_f class_i voxel_v density
@@ -236,7 +241,7 @@ public class Main {
                     // cycle on voxel to evaluate std
                     float std = 0;
                     for (int v : voxelSet) {
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass);
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass, false);
                         std +=  Math.pow((pointList.size() - mean), 2);
                     }
                     if(voxelSet.size() > 0)
@@ -404,8 +409,9 @@ public class Main {
             System.out.println("\n" + voxelDensityStats.keySet() + "\nsize: " + voxelDensityStats.size());
 
 
-            System.out.println("\nphoto/lidar intersection voxels where filetype_f class_i voxel_v density >= filetype_f class_i voxel density mean");
-            Set<Integer> filteredIntersectionSet = intersectionSet;
+            System.out.println("\nphoto/lidar intersection voxels where " +
+                    "at least one class for each -> filetype voxel density >= voxel density mean");
+            filteredIntersectionSet = intersectionSet;
 
             for (int v : intersectionSet) {
                 System.out.println("..v " + v);
@@ -424,8 +430,8 @@ public class Main {
                         if (voxelDensityStats.containsKey(ft + "_" + pclass + "_density_mean"))
                             ftClVDensityMean = voxelDensityStats.get(ft + "_" + pclass + "_density_mean");
 
-                        System.out.println("........ftClVDensity " + ftClVDensity);
-                        System.out.println("........ftClVDensityMean " + ftClVDensityMean);
+                        //System.out.println("........ftClVDensity " + ftClVDensity);
+                        //System.out.println("........ftClVDensityMean " + ftClVDensityMean);
 
                         if (ftClVDensityMean == 0 || ftClVDensity < ftClVDensityMean) {
                             passed = false;
@@ -454,11 +460,10 @@ public class Main {
 
         }
 
-        System.exit(1);
 
-
-
+        ///////////////////////////////////////////////////////////////////////
         System.out.println("\nproperties statistics");
+        ///////////////////////////////////////////////////////////////////////
 
         String[][] props = pcf.getProperties();
 
@@ -585,27 +590,224 @@ public class Main {
 
 
 
+        if(voxelSide != 0) {
+            System.out.println("\nphoto/lidar intersection voxels where " +
+                    "at least one class for each filetype -> voxel density >= voxel density mean - std");
+            for (Integer v : filteredIntersectionSet) {
+                System.out.println("..v" + v);
+                boolean passed = false;
+                for (PointClassification pclass : PointClassification.values()) {
+                    System.out.println("...." + pclass);
+                    for (FileType ft : FileType.values()) {
+                        System.out.println("......" + ft);
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pclass, true);
+                        float density_mean = voxelDensityStats.get(ft + "_" + pclass + "_density_mean");
+                        float density_std = voxelDensityStats.get(ft.name() + "_" + pclass.name() + "_density_std");
 
-        ///////////////////////////////////////////////////////
-        // collect points (filtering according to threasholds)
-        ///////////////////////////////////////////////////////
+                        //System.out.println("........pointList.size() " + pointList.size());
+                        //System.out.println("........density_mean - density_std " + (density_mean - density_std));
 
-//        // read the config file
-//        File jsonfile = new File(filePath + File.separator + "config.json");
-//        readThresholdJson(jsonfile);
+                        if (pointList.size() < (density_mean - density_std)) {
+                            passed = false;
+                            //System.out.println("one ft fails");
+                            break;
+                        } else passed = true;
+                        //System.out.println("one ft succeed");
+                    }
+
+                    if (passed) {
+                        scoredFilteredIntersectionSet.add(v);
+                        break;
+                    }
+                }
+            }
+
+            if (Main.DEBUG)
+                System.out.println(".." + scoredFilteredIntersectionSet.toString());
+            else
+                System.out.println(".." + scoredFilteredIntersectionSet.size() + " voxels");
+        }
+
+
+
+
+        /////////////////////////////////////////////
+        // WRITE DATA
+        ////////////////////////////////////////////
+        if(voxelSide == 0)
+            writeOutput(pcf.getPoints(), false, "out");
+        else
+            writeOutput(scoredFilteredIntersectionSet, true, "out");
+
+
+
+
+        System.exit(1);
+
+
+
+
+
+
+
+
+//        ///////////////////////////////////////////////////////
+//        // collect points (filtering according to threasholds)
+//        ///////////////////////////////////////////////////////
+//
+////        // read the config file
+////        File jsonfile = new File(filePath + File.separator + "config.json");
+////        readThresholdJson(jsonfile);
+//        JSONArray fileTypes = config.getJSONArray("fileTypes");
+//
+//        // write the output files
+//        BufferedWriter writer1 = new BufferedWriter(new FileWriter(outFile1, false));
+//        BufferedWriter writer2 = new BufferedWriter(new FileWriter(outFile2, false));
+//        BufferedWriter bw;
+//
+//        System.out.println("\nWrite files");
+//        for(FileType ft : FileType.values()) {
+//            System.out.println(".."+ft);
+//            start = System.currentTimeMillis();
+//
+//            JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
+//            JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
+//
+//            String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
+//            //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
+//            headerStr = headerStr.replace("[", "// ");
+//            headerStr = headerStr.replace("]", "");
+//
+//            headerStr += " score";
+//
+//            System.out.println("..header: " + headerStr);
+//
+//            bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
+//            bw.write(headerStr + "");
+//            bw.newLine();
+//
+//            List<Point> points = new ArrayList<>();
+//
+//            if(voxelSide == 0) {
+//                points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
+//
+//                if (!points.isEmpty())
+//                    for (Point p : points) {
+//                        System.out.println("......point " + p.toString(pcf.getCoordShift()));
+//                        JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
+//                        float threshold = classTypeObj.getFloat("threshold");
+//                        //String formula = classTypeObj.getString("formula");
+//
+//                        //                    System.out.println(p.toString() +
+//                        //                            " type: " + p.getType() +
+//                        //                            " class: " + p.getClassification().ordinal() +
+//                        //                            " formula: " + formula);
+//
+//                        System.out.println("........score " + p.getScore());
+//                        System.out.println("........threshold " + threshold);
+//
+//                        // filter according to the score
+//                        if (p.getScore() <= threshold) {
+//                            System.out.println("..........yes");
+//                            // SELECT true if you want normalized values
+//                            bw.write(p.toStringOutput(false, pcf.getCoordShift()));
+//                            bw.newLine();
+//                        }
+//                    }
+//
+//                //Stats.printElapsedTime(start, "file written");
+//            }else {
+//
+//                for (Integer v : filteredIntersectionSet) {
+//                    System.out.println("....v"+v);
+//
+//                    //List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
+//                    points = pcf.getPoints(ft, v);
+//
+//                    if (!points.isEmpty())
+//                        for (Point p : points) {
+//                            System.out.println("......point " + p.toString(pcf.getCoordShift()));
+//                            JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
+//                            float threshold = classTypeObj.getFloat("threshold");
+//                            //String formula = classTypeObj.getString("formula");
+//
+//                            //                    System.out.println(p.toString() +
+//                            //                            " type: " + p.getType() +
+//                            //                            " class: " + p.getClassification().ordinal() +
+//                            //                            " formula: " + formula);
+//
+//                            System.out.println("........score " + p.getScore());
+//                            System.out.println("........threshold " + threshold);
+//
+//                            // filter according to the score
+//                            if (p.getScore() <= threshold) {
+//                                System.out.println("..........yes");
+//                                // SELECT true if you want normalized values
+//                                bw.write(p.toStringOutput(false, pcf.getCoordShift()));
+//                                bw.newLine();
+//                            }else{
+//                                points.remove(p);
+//                            }
+//                        }
+//
+//                    if(points.isEmpty())
+//                        break;
+//                }
+//            }
+//            Stats.printElapsedTime(start, "file written");
+//        }
+//
+//        writer1.close();
+//        writer2.close();
+    }
+
+
+    public void writeOutput(List<Point> points, boolean scoreCheck, String label){
+        Path out1 = null, out2 = null;
+
+        try {
+            if (outFile == null) {
+                outFile1 = new File(filePath + File.separator + fn1 + "_" + label + ".txt");
+                outFile2 = new File(filePath + File.separator + fn2 + "_" + label + ".txt");
+            }
+            //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
+
+            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
+            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
+
+        } catch (IOException foee) {
+            if (overWrite == null || !overWrite) {
+                System.out.println("\nWARNING! the output file already exists");
+                System.exit(1);
+            } else
+                System.out.println("\nreading input files");
+            if(overWrite)
+                System.out.println("..overWrite output file");
+        }
+
+
+
         JSONArray fileTypes = config.getJSONArray("fileTypes");
 
         // write the output files
-        System.out.println("\noutput");
-        BufferedWriter writer1 = new BufferedWriter(new FileWriter(outFile1, false));
-        BufferedWriter writer2 = new BufferedWriter(new FileWriter(outFile2, false));
+        BufferedWriter writer1 = null, writer2 = null;
+        try {
+            writer1 = new BufferedWriter(new FileWriter(outFile1, false));
+            writer2 = new BufferedWriter(new FileWriter(outFile2, false));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         BufferedWriter bw;
 
+
+        System.out.println("\nWrite files");
         for(FileType ft : FileType.values()) {
+            //System.out.println(".." + ft);
             start = System.currentTimeMillis();
 
-            JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
-            JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
+            //JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
+            //JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
 
             String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
             //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
@@ -617,35 +819,141 @@ public class Main {
             System.out.println("..header: " + headerStr);
 
             bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
-            bw.write(headerStr + "");
-            bw.newLine();
-
-            List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
-
-            if (!points.isEmpty())
-                for (Point p : points) {
-                    JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
-                    float threshold = classTypeObj.getFloat("threshold");
-                    //String formula = classTypeObj.getString("formula");
-
-//                    System.out.println(p.toString() +
-//                            " type: " + p.getType() +
-//                            " class: " + p.getClassification().ordinal() +
-//                            " formula: " + formula);
-
-                    // filter according to the score
-                    if (p.getScore() <= threshold) {
-                        // SELECT true if you want normalized values
-                        bw.write(p.toStringOutput(false, pcf.getCoordShift()));
-                        bw.newLine();
-                    }
-                }
-
-            Stats.printElapsedTime(start, "file written");
+            try {
+                bw.write(headerStr + "");
+                bw.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        writer1.close();
-        writer2.close();
+        if (!points.isEmpty())
+            for (Point p : points) {
+//                        System.out.println("......point " + p.toString(pcf.getCoordShift()));
+//                        System.out.println("........score " + p.getScore());
+//                        System.out.println("........threshold " + p.getThreshold());
+
+                try {
+                    bw = (p.getType() == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
+                    // SELECT true if you want normalized values
+                    bw.write(p.toStringOutput(false, pcf.getCoordShift()));
+                    bw.newLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        Stats.printElapsedTime(start, (label + " files written"));
+
+
+        try {
+            writer1.close();
+            writer2.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void writeOutput(Set<Integer> voxels, boolean scoreCheck, String label){
+
+        Path out1 = null, out2 = null;
+
+        try {
+            if (outFile == null) {
+                outFile1 = new File(filePath + File.separator + fn1 + "_" + label + ".txt");
+                outFile2 = new File(filePath + File.separator + fn2 + "_" + label + ".txt");
+            }
+            //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
+            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
+
+            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
+            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
+
+        } catch (IOException foee) {
+            if (overWrite == null || !overWrite) {
+                System.out.println("\nWARNING! the output file already exists");
+                System.exit(1);
+            } else
+                System.out.println("\nreading input files");
+            if(overWrite)
+                System.out.println("..overWrite output file");
+        }
+
+
+
+
+
+        JSONArray fileTypes = config.getJSONArray("fileTypes");
+
+        // write the output files
+        BufferedWriter writer1 = null, writer2 = null;
+        try {
+            writer1 = new BufferedWriter(new FileWriter(outFile1, false));
+            writer2 = new BufferedWriter(new FileWriter(outFile2, false));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        BufferedWriter bw;
+
+
+        System.out.println("\nWrite files");
+        for(FileType ft : FileType.values()) {
+            //System.out.println(".." + ft);
+            start = System.currentTimeMillis();
+
+            //JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
+            //JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
+
+            String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
+            //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
+            headerStr = headerStr.replace("[", "// ");
+            headerStr = headerStr.replace("]", "");
+
+            headerStr += " score";
+
+            System.out.println("..header: " + headerStr);
+
+            bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
+            try {
+                bw.write(headerStr + "");
+                bw.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            List<Point> points = null;
+
+            for(Integer v : voxels) {
+
+                points = pcf.getPoints(ft, v, scoreCheck);
+
+                if (!points.isEmpty())
+                    for (Point p : points) {
+//                        System.out.println("......point " + p.toString(pcf.getCoordShift()));
+//                        System.out.println("........score " + p.getScore());
+//                        System.out.println("........threshold " + p.getThreshold());
+
+                        try {
+                            // SELECT true if you want normalized values
+                            bw.write(p.toStringOutput(false, pcf.getCoordShift()));
+                            bw.newLine();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                //Stats.printElapsedTime(start, "file written");
+            }
+            Stats.printElapsedTime(start, (label + " files written"));
+        }
+
+        try {
+            writer1.close();
+            writer2.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

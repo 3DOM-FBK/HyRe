@@ -68,10 +68,13 @@ voxelSide != 0
 ```java
 Main()
 voxelSide != 0
+
+### Check POINT BELONGING TO SPECIFIC VOXEL
 	//random voxel v
 	//for each fileType
 	//	getPoints(v) and print points
 
+### AVERAGE VOXEL DENSITY
     for each fileType
         //evaluate average per class voxel density
         for each class
@@ -94,13 +97,31 @@ voxelSide != 0
             std += pow((pointsInVoxel.size - mean, 2)
         std = sqrt(std / voxels)
 
-    // find the set of voxels that contains both lidar and photo points
+### PHOTO/LIDAR INTERSECTION IN EACH VOXEL
+    // find the set of voxels that contain both lidar and photo points
     for each fileType
         find intersection getVoxels(fileType)
     print count voxels in intersection set
 
+### MULTICLASS IN EACH INTERSECTION VOXEL
+    // find the set of voxels that contain both C0 & C1 lidar points
+    //TODO: optimize combination without permutations
+    for each fileType
+        set c0_c1
+        for v in intersection
+            c0 = false
+            c1 = false
+            for each point
+                if p.c0 -> c0 = true
+                if p.c1 -> c1 = true
+                if c0 && c1 -> add v in c0_c1
+                break
 
-print properties statistics
+    // find (filteredIntersectionSet) the set of voxels that contain both lidar
+    // and photo points (intersection) and at least one class where both fileTypes
+    // meet density criteria (voxel_v density >= voxel density mean)
+
+print properties statistics (on all data points)
 
 	(for each fileType)
 		for each property
@@ -111,6 +132,14 @@ print properties statistics
 			for each class
 				mad, med
 ```
+
+
+
+
+
+
+
+
 
 ## APPLY FILTER AND WRITE DATA
 ```java

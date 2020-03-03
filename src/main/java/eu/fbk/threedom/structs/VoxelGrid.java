@@ -17,7 +17,9 @@ public class VoxelGrid {
     private int width, height, depth;
     private LinkedList points;
     @Getter @Setter private int size;
+    @Getter @Setter private float shift;
     @Getter @Setter private Voxel[] voxels;
+
 
     private List<Set<Integer>> voxelsList;
 
@@ -216,7 +218,7 @@ public class VoxelGrid {
         return list;
     }
 
-    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
+    public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
 
@@ -226,8 +228,13 @@ public class VoxelGrid {
         LlNode n = vox.getHead();
         while(n != null) {
             Point p = (Point)n.value();
-            if(p.getType() == fileType && p.getClassification() == pointType)
-                list.add(p);
+
+            if(scoreCheck) {
+                if (p.getType() == fileType && p.getScore() <= p.getThreshold())
+                    list.add(p);
+            }else
+                if(p.getType() == fileType)
+                    list.add(p);
 
             // exit condition
             if(!n.hasNext() || n == vox.getTail()) break;
@@ -236,6 +243,60 @@ public class VoxelGrid {
 
         return list;
     }
+
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck, Point coordShift){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            System.out.println("........point " + p.toString(coordShift));
+
+            if(scoreCheck) {
+                if (p.getType() == fileType && p.getClassification() == pointType && p.getScore() <= p.getThreshold()) {
+                    list.add(p);
+                    System.out.println("..........fileType: "+p.getType());
+                    System.out.println("..........fileClass: "+p.getClassification());
+                    System.out.println("..........score: "+p.getScore());
+                    System.out.println("..........threshold: "+p.getThreshold());
+                }
+            }else
+                if(p.getType() == fileType && p.getClassification() == pointType) {
+                    list.add(p);
+                }
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
+//    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, float threshold){
+//        List<Point> list = new ArrayList<>();
+//        Voxel vox = getVoxel(voxelId);
+//
+//        if(vox == null)
+//            return null;
+//
+//        LlNode n = vox.getHead();
+//        while(n != null) {
+//            Point p = (Point)n.value();
+//            if(p.getType() == fileType && p.getClassification() == pointType && p.getScore() <= threshold)
+//                list.add(p);
+//
+//            // exit condition
+//            if(!n.hasNext() || n == vox.getTail()) break;
+//            n = n.next();
+//        }
+//
+//        return list;
+//    }
 
     public int getNumberOfPoint(FileType fileType, int voxelId, PointClassification pointType){
         Voxel vox = getVoxel(voxelId);

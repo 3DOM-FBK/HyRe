@@ -57,7 +57,9 @@ public class PcFilter {
         newBboxMin = new Point(0, 0, 0);
         File[] data = {file1Data, file2Data};
 
-        min = (voxelSide != 0) ? findMin(data) : new Point(0, 0, 0);
+        //min = (voxelSide != 0) ? findMin(data) : new Point(0, 0, 0);
+        min = findMin(data);
+
 
         //System.out.println("&&&&&&&&&&&& BboxMin " + bbox.getMin());
         //System.out.println("&&&&&&&&&&&& BboxMax " + bbox.getMax());
@@ -71,13 +73,15 @@ public class PcFilter {
             float vectorShiftZ = (int) (min.z / voxelSide) * voxelSide;
             coordShift = new Point(vectorShiftX, vectorShiftY, vectorShiftZ);
 
-            // apply the shift vector to the bbox
-            bbox.setMin(bbox.getMin().subPoint(coordShift));
-            bbox.setMax(bbox.getMax().subPoint(coordShift));
-
             //System.out.println("&&&&&&&&&&&& newBboxMin " + bbox.getMin());
             //System.out.println("&&&&&&&&&&&& newBboxMax " + bbox.getMax());
+        }else{
+            coordShift = min;
         }
+
+        // apply the shift vector to the bbox
+        bbox.setMin(bbox.getMin().subPoint(coordShift));
+        bbox.setMax(bbox.getMax().subPoint(coordShift));
         //////////////////////////////////////////////////////////
 
 
@@ -134,7 +138,7 @@ public class PcFilter {
                             Float.parseFloat(token[1]),
                             Float.parseFloat(token[2]));
 
-                    System.out.println(".." + point);
+                    //System.out.println(".." + point);
 
                     bbox.extendTo(point);
                 }
@@ -143,7 +147,7 @@ public class PcFilter {
             }
         }
 
-        Stats.printElapsedTime(start, "bounding box min is " + bbox.getMin().toString());
+        Stats.printElapsedTime(start, "..bounding box min is " + bbox.getMin().toString());
 
         return bbox.getMin();
     }
@@ -235,8 +239,8 @@ public class PcFilter {
                             Integer.parseInt(token[3]),
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
-                    System.out.println("min " + min);
-                    System.out.println("newBboxMin " + newBboxMin);
+                    //System.out.println("min " + min);
+                    //System.out.println("newBboxMin " + newBboxMin);
 
                     p.move(p.subPoint(coordShift));
 
@@ -360,6 +364,7 @@ public class PcFilter {
 
             JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
             String formula = classTypeObj.getString("formula");
+            float threshold = classTypeObj.getFloat("threshold");
 
 //            System.out.println(".." + p.toString() +
 //                    " type: " + p.getType() +
@@ -404,6 +409,7 @@ public class PcFilter {
             //p.setScore(score);
 
             p.setScore(evaluateScore(p, formula));
+            p.setThreshold(threshold);
 
             // exit condition
             if(!n.hasNext() || n.next() == exitNode) break;
@@ -440,13 +446,42 @@ public class PcFilter {
         return vGrid.getPoints(fileType, voxelId);
     }
 
+    public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
+        return vGrid.getPoints(fileType, voxelId, scoreCheck);
+    }
+
     public List<Point> getPoints(int voxelId){
         return vGrid.getPoints(voxelId);
     }
 
-    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
-        return vGrid.getPoints(fileType, voxelId, pointType);
+    /**
+     *
+     * @param fileType
+     * @param voxelId
+     * @param pointType
+     * @param scoreCheck evaluate the comparison between score and threshold
+     * @return
+     */
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck){
+        return vGrid.getPoints(fileType, voxelId, pointType, scoreCheck, coordShift);
     }
+
+
+    public List<Point> getPoints(){
+        List<Point> list = new ArrayList<>();
+
+        LlNode n = points.head();
+        while(n != null) {
+            list.add((Point)n.value());
+
+            // exit condition
+            if(!n.hasNext() ) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
 
     public List<Point> getPoints(FileType fileType, boolean voxelGrid){
         if(voxelGrid)

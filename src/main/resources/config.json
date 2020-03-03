@@ -12,8 +12,8 @@
         {
           "classId": "0",
           "name": "roof",
-          "threshold": "0.669097",
-          "formula": "PIntensity + ( 1 - NumberOfReturns )"
+          "threshold": "0.6",
+          "formula": "PIntensity"
         },
         {
           "classId": "1",
@@ -24,7 +24,7 @@
         {
           "classId": "2",
           "name": "street",
-          "threshold": "0.323626",
+          "threshold": "0.9",
           "formula": "PIntensity"
         }
       ]
