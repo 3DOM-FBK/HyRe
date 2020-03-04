@@ -4,6 +4,7 @@ import eu.fbk.threedom.pc.BBox;
 import eu.fbk.threedom.pc.FileType;
 import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
+import eu.fbk.threedom.pcFilter.Main;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -254,15 +255,17 @@ public class VoxelGrid {
         LlNode n = vox.getHead();
         while(n != null) {
             Point p = (Point)n.value();
-            System.out.println("........point " + p.toString(coordShift));
 
             if(scoreCheck) {
                 if (p.getType() == fileType && p.getClassification() == pointType && p.getScore() <= p.getThreshold()) {
                     list.add(p);
-                    System.out.println("..........fileType: "+p.getType());
-                    System.out.println("..........fileClass: "+p.getClassification());
-                    System.out.println("..........score: "+p.getScore());
-                    System.out.println("..........threshold: "+p.getThreshold());
+                    if(Main.DEBUG) {
+                        System.out.println("........" + p.toString(coordShift));
+                        System.out.println("..........fileType: " + p.getType());
+                        System.out.println("..........fileClass: " + p.getClassification());
+                        System.out.println("..........score: " + p.getScore());
+                        System.out.println("..........threshold: " + p.getThreshold());
+                    }
                 }
             }else
                 if(p.getType() == fileType && p.getClassification() == pointType) {

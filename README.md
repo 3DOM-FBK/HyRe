@@ -117,10 +117,22 @@ voxelSide != 0
                 if c0 && c1 -> add v in c0_c1
                 break
 
+
+### FILTERED INTERSECTION SET
     // find (filteredIntersectionSet) the set of voxels that contain both lidar
     // and photo points (intersection) and at least one class where both fileTypes
     // meet density criteria (voxel_v density >= voxel density mean)
+    // TODO: describe in pseudocode here
 
+### SCORED FILTERED INTERSECTION SET
+    // find (scoredFilteredIntersectionSet) the set of voxels that contain both lidar
+    // and photo points (intersection) and at least one class where both fileTypes
+    // meet density criteria (voxel_v density >= voxel density mean)
+    // TODO: describe in pseudocode here
+
+
+
+### PRINT PROPERTIES STATISTICS
 print properties statistics (on all data points)
 
 	(for each fileType)
@@ -134,18 +146,10 @@ print properties statistics (on all data points)
 ```
 
 
-
-
-
-
-
-
-
-## APPLY FILTER AND WRITE DATA
+## WRITE DATA
 ```java
-for each filetype
-	for each point
-		load threshold from config
-			score <= threshold
-				write point to output
+    for each fileType
+        for v in scoredFilteredIntersectionSet
+            for each point where score is ok
+                write point to ft output
 ```
