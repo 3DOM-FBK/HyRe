@@ -315,8 +315,10 @@ public class Main {
             // initialize with all the voxels
             Set<Integer> intersectionSet = pcf.getVGrid().getVoxels( new FileType[] {FileType.PHOTOGRAMMETRIC,FileType.LIDAR} );
             // cycle on photogrammetry/lidar file and find the intersection
-            for (FileType ft : FileType.values())
+            for (FileType ft : FileType.values()) {
+                System.out.println(".." + ft + " set " + pcf.getVGrid().getVoxels(ft));
                 intersectionSet.retainAll(pcf.getVGrid().getVoxels(ft));
+            }
 
 
             if(Main.DEBUG)
@@ -429,7 +431,6 @@ public class Main {
 
             System.out.println("photo/lidar intersection voxels where " +
                     "at least one class for each -> filetype voxel density >= voxel density mean");
-            filteredIntersectionSet = intersectionSet;
 
             start = System.currentTimeMillis();
 

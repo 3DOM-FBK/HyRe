@@ -21,8 +21,8 @@ public class VoxelGrid {
     @Getter @Setter private float shift;
     @Getter @Setter private Voxel[] voxels;
 
-
     private List<Set<Integer>> voxelsList;
+    @Getter HashSet<Integer> voxelWithPoints;
 
     @Setter @Getter private HashMap<String, Float> propsStats;
 
@@ -44,6 +44,8 @@ public class VoxelGrid {
         for(int i = 0; i < PointClassification.values().length * 2; i++)
             voxelsList.add(new HashSet<Integer>());
 
+        voxelWithPoints = new HashSet<>();
+
         generateVoxels();
     }
 
@@ -51,7 +53,6 @@ public class VoxelGrid {
         System.out.println("\ngenerate voxel structure\n..voxelSide: " + voxelSide);
         System.out.println("..voxelGrid dimension " + width + " x " + height + " x " + depth);
         System.out.println("..voxels to generate " + size);
-
 
         ///////////////////////////////////////////////////////
         // iterate on the linked list and update/create voxels
@@ -62,6 +63,8 @@ public class VoxelGrid {
             int id = getVoxelId(p.x, p.y, p.z);
 
             if(id != -1) {
+                if(!voxelWithPoints.contains(id)) voxelWithPoints.add(id);
+
                 FileType fileType = p.getType();
 
                 switch (p.getClassification()) {
@@ -91,6 +94,16 @@ public class VoxelGrid {
             if(!n.hasNext()) break;
             n = n.next();
         }
+
+        System.out.println("..voxels with at least one point " + voxelWithPoints.size());
+
+//        Set<Integer> totalSet = voxelsList.get(0);
+//        for (int i=1; i < voxelsList.size(); i++)
+//            for(int j : voxelsList.get(i))
+//                if(!totalSet.contains(j))
+//                    totalSet.add(j);
+//
+//        System.out.println("..voxels with at least one point " + totalSet.size());
     }
 
 
