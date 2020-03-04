@@ -475,7 +475,12 @@ public class Main {
                 System.out.println(".." + filteredIntersectionSet.size() + " voxels");
 
         }
+
+        // write in output files the filteredIntersection
+        writeOutput(filteredIntersectionSet, false, "filteredIntersection");
+
         Stats.printElapsedTime(start, "processed");
+
 
 
         ///////////////////////////////////////////////////////////////////////
@@ -656,7 +661,7 @@ public class Main {
         }
 
 
-        
+
         /////////////////////////////////////////////
         // WRITE DATA
         ////////////////////////////////////////////
@@ -800,9 +805,6 @@ public class Main {
 
             if(overWrite) System.out.println("..overWrite output file");
         }
-
-
-        JSONArray fileTypes = config.getJSONArray("fileTypes");
 
         // write the output files
         BufferedWriter writer1 = null, writer2 = null;
