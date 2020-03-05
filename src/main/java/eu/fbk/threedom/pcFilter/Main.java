@@ -143,6 +143,109 @@ public class Main {
         Set<Integer> filteredIntersectionSet = new TreeSet<>();
         Set<Integer> scoredFilteredIntersectionSet = new TreeSet<>();
 
+
+
+        ///////////////////////////////////////////////////////////////////////
+        //PRINT PROPERTIES STATISTICS
+        System.out.println("\n///////////////////////////////////////////////////////\n// PROPERTIES STATISTICS");
+
+
+        String[][] props = pcf.getProperties();
+
+        // EVALUATE PROPERTY MED/MAD
+        for(FileType ft : FileType.values()) {
+            //System.out.println("\n.." + ft.name());
+            start = System.currentTimeMillis();
+
+            for(int p=0; p < props[ft.ordinal()].length; p++) {
+                String prop = props[ft.ordinal()][p];
+
+                //ArrayList propValues = (ArrayList<Float>) data.get(prop);
+                List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
+
+
+                // transform arrayList to array
+                float[] values = new float[points.size()];
+
+                if(values.length == 0) break;
+
+                int n = 0;
+//                for (Object v : propValues)
+                for (Point pnt : points)
+                    values[n++] = pnt.getNormProp(p);
+
+                if (Main.DEBUG)
+                    System.out.println(".." + prop + " values (normalized) " + Arrays.toString(values));
+                else
+                    System.out.println(".." + prop + " values (normalized) " + values.length + " values");
+
+                float med = Stats.median(values, values.length);
+                float mad = Stats.mad(values, values.length);
+                System.out.println("....med: " + med + "\n....mad: " + mad
+                        + "\n....sigmaM: " + (mad * 1.4826)
+                        + "\n....3sigmaM: " + 3 * (mad * 1.4826));
+            }
+            Stats.printElapsedTime(start, "processed");
+        }
+
+        // EVALUATE PROPERTY MED/MAD (CLASS)
+        for(FileType ft : FileType.values()) {
+            System.out.println("\n.." + ft.name());
+            start = System.currentTimeMillis();
+
+            for(int k=0; k < props[ft.ordinal()].length; k++) {
+                String prop = props[ft.ordinal()][k];
+                System.out.println("...." + prop);
+
+                for (PointClassification pc : PointClassification.values()) {
+
+                    ArrayList propValues = new ArrayList();
+                    if(voxelSide != 0) {
+                        Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
+
+                        if(voxelSet == null) continue;
+
+                        // extract values from voxels
+                        for (int v : voxelSet) {
+                            // list of points of fileType ft, in voxel v, of class pc
+                            pointList = (ArrayList<Point>) pcf.getPoints(ft, v, pc);
+                            for (Point p : pointList)
+//                            propValues.add(p.getProp(prop));
+                                propValues.add(p.getNormProp(k));
+
+                        }
+                    }else{
+                        pointList = (ArrayList<Point>) pcf.getPoints(ft, pc,false);
+                        for (Point p : pointList)
+                            propValues.add(p.getNormProp(k));
+                    }
+
+                    if(propValues.isEmpty()) break;
+
+                    if(Main.DEBUG)
+                        System.out.println("......" + pc.name() + " (normalized) " + propValues);
+                    else
+                        System.out.println("......" + pc.name() + " (normalized) " + propValues.size() + " values");
+
+                    // transform arrayList to array
+                    float[] values = new float[propValues.size()];
+                    values = new float[propValues.size()];
+                    int n = 0;
+                    for (Object p : propValues)
+                        values[n++] = (float) p;
+
+                    float med = Stats.median(values, values.length);
+                    float mad = Stats.mad(values, values.length);
+                    System.out.println("........med: " + med + "\n........mad: " + mad
+                            + "\n........sigmaM: " + (mad * 1.4826)
+                            + "\n........3sigmaM: " + 3*(mad * 1.4826) );
+                }
+            }
+
+            Stats.printElapsedTime(start, "processed");
+        }
+
+
         if(voxelSide != 0) {
             ///////////////////////////////////////////////////////
             // pick a random voxel to filter
@@ -300,6 +403,7 @@ public class Main {
 
 
 
+
             ///////////////////////////////////////////////////////
             // PHOTO/LIDAR INTERSECTION IN EACH VOXEL
             System.out.println("\n///////////////////////////////////////////////////////\n// PHOTO/LIDAR INTERSECTION IN EACH VOXEL");
@@ -316,7 +420,10 @@ public class Main {
             Set<Integer> intersectionSet = pcf.getVGrid().getVoxels( new FileType[] {FileType.PHOTOGRAMMETRIC,FileType.LIDAR} );
             // cycle on photogrammetry/lidar file and find the intersection
             for (FileType ft : FileType.values()) {
-                System.out.println(".." + ft + " set " + pcf.getVGrid().getVoxels(ft));
+                if(Main.DEBUG)
+                    System.out.println(".." + ft + " set " + pcf.getVGrid().getVoxels(ft));
+                else
+                    System.out.println(".." + ft + " " + pcf.getVGrid().getVoxels(ft).size() + " voxels");
                 intersectionSet.retainAll(pcf.getVGrid().getVoxels(ft));
             }
 
@@ -482,106 +589,6 @@ public class Main {
 
         Stats.printElapsedTime(start, "processed");
 
-
-
-        ///////////////////////////////////////////////////////////////////////
-        //PRINT PROPERTIES STATISTICS
-        System.out.println("\n///////////////////////////////////////////////////////\n// PROPERTIES STATISTICS");
-
-
-        String[][] props = pcf.getProperties();
-
-        // EVALUATE PROPERTY MED/MAD
-        for(FileType ft : FileType.values()) {
-            //System.out.println("\n.." + ft.name());
-            start = System.currentTimeMillis();
-
-            for(int p=0; p < props[ft.ordinal()].length; p++) {
-                String prop = props[ft.ordinal()][p];
-
-                //ArrayList propValues = (ArrayList<Float>) data.get(prop);
-                List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
-
-
-                // transform arrayList to array
-                float[] values = new float[points.size()];
-
-                if(values.length == 0) break;
-
-                int n = 0;
-//                for (Object v : propValues)
-                for (Point pnt : points)
-                    values[n++] = pnt.getNormProp(p);
-
-                if (Main.DEBUG)
-                    System.out.println(".." + prop + " values (normalized) " + Arrays.toString(values));
-                else
-                    System.out.println(".." + prop + " values (normalized) " + values.length + " values");
-
-                float med = Stats.median(values, values.length);
-                float mad = Stats.mad(values, values.length);
-                System.out.println("....med: " + med + "\n....mad: " + mad
-                        + "\n....sigmaM: " + (mad * 1.4826)
-                        + "\n....3sigmaM: " + 3 * (mad * 1.4826));
-            }
-            Stats.printElapsedTime(start, "processed");
-        }
-
-        // EVALUATE PROPERTY MED/MAD (CLASS)
-        for(FileType ft : FileType.values()) {
-            System.out.println("\n.." + ft.name());
-            start = System.currentTimeMillis();
-
-            for(int k=0; k < props[ft.ordinal()].length; k++) {
-                String prop = props[ft.ordinal()][k];
-                System.out.println("...." + prop);
-
-                for (PointClassification pc : PointClassification.values()) {
-
-                    ArrayList propValues = new ArrayList();
-                    if(voxelSide != 0) {
-                        Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pc);
-
-                        if(voxelSet == null) continue;
-
-                        // extract values from voxels
-                        for (int v : voxelSet) {
-                            pointList = (ArrayList<Point>) pcf.getPoints(ft, v);
-                            for (Point p : pointList)
-//                            propValues.add(p.getProp(prop));
-                                propValues.add(p.getNormProp(k));
-
-                        }
-                    }else{
-                        pointList = (ArrayList<Point>) pcf.getPoints(ft, pc,false);
-                        for (Point p : pointList)
-                            propValues.add(p.getNormProp(k));
-                    }
-
-                    if(propValues.isEmpty()) break;
-
-                    if(Main.DEBUG)
-                        System.out.println("......" + pc.name() + " (normalized) " + propValues);
-                    else
-                        System.out.println("......" + pc.name() + " (normalized) " + propValues.size() + " values");
-
-                    // transform arrayList to array
-                    float[] values = new float[propValues.size()];
-                    values = new float[propValues.size()];
-                    int n = 0;
-                    for (Object p : propValues)
-                        values[n++] = (float) p;
-
-                    float med = Stats.median(values, values.length);
-                    float mad = Stats.mad(values, values.length);
-                    System.out.println("........med: " + med + "\n........mad: " + mad
-                            + "\n........sigmaM: " + (mad * 1.4826)
-                            + "\n........3sigmaM: " + 3*(mad * 1.4826) );
-                }
-            }
-
-            Stats.printElapsedTime(start, "processed");
-        }
 
 
         ///////////////////////////////////////////////////////

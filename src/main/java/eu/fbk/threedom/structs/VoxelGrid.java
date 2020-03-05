@@ -232,6 +232,34 @@ public class VoxelGrid {
         return list;
     }
 
+    /**
+     *
+     * @param fileType
+     * @param voxelId
+     * @param pointType
+     * @return
+     */
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
+        List<Point> list = new ArrayList<>();
+        Voxel vox = getVoxel(voxelId);
+
+        if(vox == null)
+            return null;
+
+        LlNode n = vox.getHead();
+        while(n != null) {
+            Point p = (Point)n.value();
+            if(p.getType() == fileType && p.getClassification() == pointType)
+                list.add(p);
+
+            // exit condition
+            if(!n.hasNext() || n == vox.getTail()) break;
+            n = n.next();
+        }
+
+        return list;
+    }
+
     public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);

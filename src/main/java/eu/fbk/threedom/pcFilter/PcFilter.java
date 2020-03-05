@@ -454,6 +454,10 @@ public class PcFilter {
         return vGrid.getPoints(fileType, voxelId);
     }
 
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pc){
+        return vGrid.getPoints(fileType, voxelId, pc);
+    }
+
     public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         return vGrid.getPoints(fileType, voxelId, scoreCheck);
     }
