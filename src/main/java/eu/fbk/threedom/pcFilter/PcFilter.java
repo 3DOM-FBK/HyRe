@@ -122,11 +122,11 @@ public class PcFilter {
         start = System.currentTimeMillis();
 
         for(File f : data) {
+            String line = null; // header
             try {
                 inputStream = new FileInputStream(f);
 
                 Scanner sc = new Scanner(inputStream, "UTF-8");
-                String line; // header
 
                 while (sc.hasNextLine()) {
                     line = sc.nextLine();
@@ -143,6 +143,9 @@ public class PcFilter {
                     bbox.extendTo(point);
                 }
             } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }catch (ArrayIndexOutOfBoundsException e){
+                System.out.println("error reading line : " + line);
                 e.printStackTrace();
             }
         }
@@ -210,6 +213,11 @@ public class PcFilter {
             //}
 
             for (String prop : props) {
+                if(propsStats.containsKey(prop + "_N")){
+                    System.out.println("Error: two columns inside input files share the same name");
+                    System.exit(0);
+                }
+
                 // initialize statistic hashmap
                 propsStats.put(prop + "_N", 0f);
                 propsStats.put(prop + "_sum", 0f);
