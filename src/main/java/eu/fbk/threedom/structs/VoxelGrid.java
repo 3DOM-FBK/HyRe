@@ -260,6 +260,7 @@ public class VoxelGrid {
         return list;
     }
 
+
     public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -412,6 +413,15 @@ public class VoxelGrid {
                 if(fileType == FileType.PHOTOGRAMMETRIC) return voxelsList.get(2); else return voxelsList.get(5);
             default: return null;
         }
+    }
+
+    public Set<Integer> getVoxels(FileType fileType, String[] pointTypes){
+        Set<Integer> voxels = getVoxels(fileType);
+
+        for(String cls : pointTypes)
+            voxels.retainAll(getVoxels(fileType, PointClassification.valueOf(cls)));
+
+        return voxels;
     }
 
     public static void main(String[] args){

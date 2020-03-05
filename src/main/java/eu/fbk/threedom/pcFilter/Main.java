@@ -3,21 +3,18 @@ package eu.fbk.threedom.pcFilter;
 import eu.fbk.threedom.pc.FileType;
 import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
-import eu.fbk.threedom.structs.Voxel;
+import eu.fbk.threedom.utils.Combinator;
 import eu.fbk.threedom.utils.Stats;
-import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
-import sun.reflect.generics.tree.Tree;
-
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -38,8 +35,6 @@ public class Main {
 
     // timer
     private static long start;
-    private static long time;
-
     private File outFile1, outFile2;
 
     public static JSONObject config;
@@ -94,28 +89,6 @@ public class Main {
         fn1 = FilenameUtils.getBaseName(inFile1.getPath()); //System.out.println("fn1: " + fn1);
         fn2 = FilenameUtils.getBaseName(inFile2.getPath()); //System.out.println("fn2: " + fn2);
 
-//        Path out1 = null, out2 = null;
-
-//        try {
-//            if (outFile == null) {
-//                outFile1 = new File(filePath + File.separator + fn1 + "_out.txt");
-//                outFile2 = new File(filePath + File.separator + fn2 + "_out.txt");
-//            }
-//                //outFile = new File(filePath + File.separator + fn1 + "_" + fn2 + ".txt");
-//            System.out.println("\noutFile:\n.." + outFile1 + "\n.." + outFile2);
-//
-//            out1 = Paths.get(outFile1.toURI()); Files.createFile(out1);
-//            out2 = Paths.get(outFile2.toURI()); Files.createFile(out2);
-//
-//        } catch (FileAlreadyExistsException foee) {
-//            if (overWrite == null || !overWrite) {
-//                System.out.println("\nWARNING! the output file already exists");
-//                System.exit(1);
-//            } else
-//                System.out.println("\nreading input files");
-//                if(overWrite)
-//                    System.out.println("..overWrite output file");
-//        }
 
         ///////////////////////////////////////////////////////
         // read the config file
@@ -144,11 +117,13 @@ public class Main {
         Set<Integer> scoredFilteredIntersectionSet = new TreeSet<>();
 
 
+        ///////////////////////////////////////////////////////
+        // SHOW DATA
+        ///////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////////////////
-        //PRINT PROPERTIES STATISTICS
+        // PRINT PROPERTIES STATISTICS
         System.out.println("\n///////////////////////////////////////////////////////\n// PROPERTIES STATISTICS");
-
 
         String[][] props = pcf.getProperties();
 
@@ -162,7 +137,6 @@ public class Main {
 
                 //ArrayList propValues = (ArrayList<Float>) data.get(prop);
                 List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
-
 
                 // transform arrayList to array
                 float[] values = new float[points.size()];
@@ -254,11 +228,9 @@ public class Main {
 //            int vGridSize = pcf.getVGrid().getSize();
 //            int i = rnd.nextInt(vGridSize);
 
-            ///////////////////////////////////////////////////////
-            // postprocessing statistics
-            ///////////////////////////////////////////////////////
 
-//            // POINT BELONGING TO SPECIFIC VOXEL
+//            ///////////////////////////////////////////////////////
+//            // Check POINT BELONGING TO SPECIFIC VOXEL
 //            System.out.println("\n\nPOST-PROCESSING STATISTICS");
 //
 //            for(int i=0; i < pcf.getVGrid().getSize(); i++) {
@@ -291,13 +263,6 @@ public class Main {
 
 
 
-
-            ///////////////////////////////////////////////////////
-            // SHOW DATA
-            ///////////////////////////////////////////////////////
-
-
-
             ///////////////////////////////////////////////////////
             // AVERAGE VOXEL DENSITY
             System.out.println("\n///////////////////////////////////////////////////////\n// VOXEL DENSITY");
@@ -312,8 +277,7 @@ public class Main {
                 System.out.println(ft.name() + " cloud");
 
                 ///////////////////////////////////////////////////////
-                // AVERAGE VOXEL DENSITY (PER CLASS)
-                // cycle on roof/facade/street point types
+                // evaluate average per class voxel density
                 for (PointClassification pclass : PointClassification.values()) {
                     numberOfPointsInVoxel_sum = 0;
                     Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft, pclass);
@@ -363,7 +327,7 @@ public class Main {
 
 
                 ///////////////////////////////////////////////////////
-                // AVERAGE VOXEL DENSITY
+                // evaluate average voxel density
                 start = System.currentTimeMillis();
                 Set<Integer> voxelSet = pcf.getVGrid().getVoxels(ft);
                 if(voxelSet == null) continue;
@@ -403,17 +367,9 @@ public class Main {
 
 
 
-
             ///////////////////////////////////////////////////////
             // PHOTO/LIDAR INTERSECTION IN EACH VOXEL
             System.out.println("\n///////////////////////////////////////////////////////\n// PHOTO/LIDAR INTERSECTION IN EACH VOXEL");
-
-//            Set<Integer> voxelSetPhoto = pcf.getVGrid().getVoxels(FileType.PHOTOGRAMMETRIC);
-//            Set<Integer> voxelSetLidar = pcf.getVGrid().getVoxels(FileType.LIDAR);
-//
-//            // intersection of sets
-//            Set<Integer> intersection = new HashSet<Integer>(voxelSetPhoto);
-//            intersection.retainAll(voxelSetLidar);
 
             start = System.currentTimeMillis();
             // initialize with all the voxels
@@ -442,93 +398,32 @@ public class Main {
             Stats.printElapsedTime(start, "processed");
 
 
+
             ///////////////////////////////////////////////////////
             // MULTICLASS IN EACH INTERSECTION VOXEL
             System.out.println("\n///////////////////////////////////////////////////////\n// MULTICLASS IN EACH INTERSECTION VOXEL");
 
-            List<Integer> c0_c1 = new ArrayList();
-            List<Integer> c0_c2 = new ArrayList();
-            List<Integer> c1_c2 = new ArrayList();
-            List<Integer> c0_c1_c2 = new ArrayList();
+            String[] classes = Stream.of(PointClassification.values()).map(PointClassification::name).toArray(String[]::new);
+            //for(String cls : classes) System.out.println(cls);
+
+            // all two places combinations
+            List<String[]> combinations = Combinator.generate(classes, 2);
+            // add the 3 places case
+            combinations.add(classes);
+
 
             // cycle on photogrammetry/lidar file
             for (FileType ft : FileType.values()) {
+                System.out.println("...." + ft + " cloud");
+
                 start = System.currentTimeMillis();
 
-                c0_c1.clear();
-                c0_c2.clear();
-                c1_c2.clear();
+                for(String[] combination : combinations)
+                    System.out.println("......" + Arrays.toString(combination)
+                            + " combination in " + pcf.getVGrid().getVoxels(ft, combination).size() + " voxels");
 
-                for( int v : intersectionSet) {
-                    List<Point> points = pcf.getVGrid().getPoints(ft, v);
-
-//                    for(Point p : points)
-//                        System.out.println("++++++++++++++++" + p.toString(pcf.getCoordShift()) + ", c " + p.getClassification().ordinal());
-
-                    boolean c0 = false, c1 = false, c2 = false;
-                    for(Point p : points){
-                        if(p.getClassification().ordinal() == 0) c0 = true;
-                        if(p.getClassification().ordinal() == 1) c1 = true;
-                        if(c0 && c1) {
-                            c0_c1.add(v);
-                            //System.out.println("..c0_c1");
-                            break;
-                        }
-                    }
-
-                    //points.clear();
-                    c0 = false; c1 = false; c2 = false;
-                    for(Point p : points){
-                        if(p.getClassification().ordinal() == 0) c0 = true;
-                        if(p.getClassification().ordinal() == 2) c2 = true;
-                        if(c0 && c2) {
-                            //System.out.println("..c0_c2");
-                            c0_c2.add(v);
-                            break;
-                        }
-                    }
-
-                    //points.clear();
-                    c0 = false; c1 = false; c2 = false;
-                    for(Point p : points){
-                        if(p.getClassification().ordinal() == 1) c1 = true;
-                        if(p.getClassification().ordinal() == 2) c2 = true;
-                        if(c1 && c2) {
-                            //System.out.println("..c1_c2");
-                            c1_c2.add(v);
-                            break;
-                        }
-                    }
-
-                    //points.clear();
-                    c0 = false; c1 = false; c2 = false;
-                    for(Point p : points){
-                        if(p.getClassification().ordinal() == 0) c0 = true;
-                        if(p.getClassification().ordinal() == 1) c1 = true;
-                        if(p.getClassification().ordinal() == 2) c2 = true;
-                        if(c0 && c1 && c2) {
-                            //System.out.println("..c0_c1_c2");
-                            c0_c1_c2.add(v);
-                            break;
-                        }
-                    }
-                }
-
-                System.out.println("...." + ft + " cloud");
-                if(c0_c1.size() > 0) System.out.println("......c0/c1 (in " + c0_c1.size() + " voxels)");
-                if(c0_c2.size() > 0) System.out.println("......c0/c2 (in " + c0_c2.size() + " voxels)");
-                if(c1_c2.size() > 0) System.out.println("......c1/c2 (in " + c1_c2.size() + " voxels)");
-                if(c0_c1_c2.size() > 0) System.out.println("......c0/c1/c2 (in " + c0_c1_c2.size() + " voxels)");
-
-//                System.out.println("\nc0_c1 (" + ft + "): " + c0_c1.size());
-//                System.out.println("c0_c2 (" + ft + "): " + c0_c2.size());
-//                System.out.println("c1_c2 (" + ft + "): " + c1_c2.size());
-//                System.out.println("c0_c1_c2 (" + ft + "): " + c0_c1_c2.size());
                 Stats.printElapsedTime(start, "processed");
             }
-
-
-            //System.out.println("\n" + voxelDensityStats.keySet() + "\nsize: " + voxelDensityStats.size());
 
 
 
@@ -645,7 +540,7 @@ public class Main {
                         //System.out.println("........pointList.size() " + pointList.size());
                         //System.out.println("........density_mean - density_std " + (density_mean - density_std));
 
-                        if (pointList.size() < (density_mean - density_std)) {
+                        if (pointList.size() < (density_mean /*- density_std*/)) {
                             passed = false; //System.out.println("one ft fails");
                             break;
                         } else passed = true; //System.out.println("one ft succeed");
@@ -669,7 +564,6 @@ public class Main {
         }
 
 
-
         /////////////////////////////////////////////
         // WRITE DATA
         ////////////////////////////////////////////
@@ -677,117 +571,6 @@ public class Main {
             writeOutput(pcf.getPoints(), "out");
         else
             writeOutput(scoredFilteredIntersectionSet, true, "out");
-
-
-
-//        ///////////////////////////////////////////////////////
-//        // collect points (filtering according to threasholds)
-//        ///////////////////////////////////////////////////////
-//
-////        // read the config file
-////        File jsonfile = new File(filePath + File.separator + "config.json");
-////        readThresholdJson(jsonfile);
-//        JSONArray fileTypes = config.getJSONArray("fileTypes");
-//
-//        // write the output files
-//        BufferedWriter writer1 = new BufferedWriter(new FileWriter(outFile1, false));
-//        BufferedWriter writer2 = new BufferedWriter(new FileWriter(outFile2, false));
-//        BufferedWriter bw;
-//
-//        System.out.println("\nWrite files");
-//        for(FileType ft : FileType.values()) {
-//            System.out.println(".."+ft);
-//            start = System.currentTimeMillis();
-//
-//            JSONObject fileTypeObj = (JSONObject) fileTypes.get(ft.ordinal());
-//            JSONArray classTypes = fileTypeObj.getJSONArray("classTypes");
-//
-//            String headerStr = Arrays.toString(pcf.getHeader(ft)).replaceAll(",", "");
-//            //headerStr = headerStr.substring(1, headerStr.length()-1); // remove square brackets []
-//            headerStr = headerStr.replace("[", "// ");
-//            headerStr = headerStr.replace("]", "");
-//
-//            headerStr += " score";
-//
-//            System.out.println("..header: " + headerStr);
-//
-//            bw = (ft == FileType.PHOTOGRAMMETRIC) ? writer1 : writer2;
-//            bw.write(headerStr + "");
-//            bw.newLine();
-//
-//            List<Point> points = new ArrayList<>();
-//
-//            if(voxelSide == 0) {
-//                points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
-//
-//                if (!points.isEmpty())
-//                    for (Point p : points) {
-//                        System.out.println("......point " + p.toString(pcf.getCoordShift()));
-//                        JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
-//                        float threshold = classTypeObj.getFloat("threshold");
-//                        //String formula = classTypeObj.getString("formula");
-//
-//                        //                    System.out.println(p.toString() +
-//                        //                            " type: " + p.getType() +
-//                        //                            " class: " + p.getClassification().ordinal() +
-//                        //                            " formula: " + formula);
-//
-//                        System.out.println("........score " + p.getScore());
-//                        System.out.println("........threshold " + threshold);
-//
-//                        // filter according to the score
-//                        if (p.getScore() <= threshold) {
-//                            System.out.println("..........yes");
-//                            // SELECT true if you want normalized values
-//                            bw.write(p.toStringOutput(false, pcf.getCoordShift()));
-//                            bw.newLine();
-//                        }
-//                    }
-//
-//                //Stats.printElapsedTime(start, "file written");
-//            }else {
-//
-//                for (Integer v : filteredIntersectionSet) {
-//                    System.out.println("....v"+v);
-//
-//                    //List<Point> points = (voxelSide != 0) ? pcf.getPoints(ft, true) : pcf.getPoints(ft, false);
-//                    points = pcf.getPoints(ft, v);
-//
-//                    if (!points.isEmpty())
-//                        for (Point p : points) {
-//                            System.out.println("......point " + p.toString(pcf.getCoordShift()));
-//                            JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
-//                            float threshold = classTypeObj.getFloat("threshold");
-//                            //String formula = classTypeObj.getString("formula");
-//
-//                            //                    System.out.println(p.toString() +
-//                            //                            " type: " + p.getType() +
-//                            //                            " class: " + p.getClassification().ordinal() +
-//                            //                            " formula: " + formula);
-//
-//                            System.out.println("........score " + p.getScore());
-//                            System.out.println("........threshold " + threshold);
-//
-//                            // filter according to the score
-//                            if (p.getScore() <= threshold) {
-//                                System.out.println("..........yes");
-//                                // SELECT true if you want normalized values
-//                                bw.write(p.toStringOutput(false, pcf.getCoordShift()));
-//                                bw.newLine();
-//                            }else{
-//                                points.remove(p);
-//                            }
-//                        }
-//
-//                    if(points.isEmpty())
-//                        break;
-//                }
-//            }
-//            Stats.printElapsedTime(start, "file written");
-//        }
-//
-//        writer1.close();
-//        writer2.close();
     }
 
 
