@@ -64,7 +64,6 @@ voxelSide != 0
 
 
 ## SHOW DATA
-
 ### PRINT PROPERTIES STATISTICS
 ```java
 print properties statistics (on all data points)
@@ -124,31 +123,51 @@ voxelSide != 0
 ### MULTICLASS IN EACH INTERSECTION VOXEL
 ```java
     // find the set of voxels that contain both C0 & C1 lidar points
-    //TODO: optimize combination without permutations
+    // for each fileType
+    //     set c0_c1
+    //     for v in intersection
+    //         c0 = false
+    //         c1 = false
+    //         for each point
+    //             if p.c0 -> c0 = true
+    //             if p.c1 -> c1 = true
+    //             if c0 && c1 -> add v in c0_c1
+    //             break
+    //TODO: optimize combination without permutations (DONE.)
+
+    classes = Combinator.generate()
     for each fileType
-        set c0_c1
-        for v in intersection
-            c0 = false
-            c1 = false
-            for each point
-                if p.c0 -> c0 = true
-                if p.c1 -> c1 = true
-                if c0 && c1 -> add v in c0_c1
-                break
+        for each combination
+            print size of getVoxels(fileType, combination)
 ```
 
 ### FILTERED INTERSECTION SET
     // find (filteredIntersectionSet) the set of voxels that contain both lidar
     // and photo points (intersection) and at least one class where both fileTypes
     // meet density criteria (voxel_v density >= voxel density mean)
-    // TODO: describe in pseudocode here
+    // TODO: describe in pseudocode here (DONE.)
+    for each v in intersection
+        for each class
+            for each fileType
+                if (ftClVDensityMean == 0 || ftClVDensity < ftClVDensityMean) -> passed false, break
+                else passed true
+
+            if passed add v, break
+
 
 ### SCORED FILTERED INTERSECTION SET
     // find (scoredFilteredIntersectionSet) the set of voxels that contain both lidar
     // and photo points (intersection) and at least one class where both fileTypes
     // meet density criteria (voxel_v density >= voxel density mean)
-    // TODO: describe in pseudocode here
+    // TODO: describe in pseudocode here (DONE.)
+    for each v in filteredIntersectionSet
+        for each class
+            for each fileType
+                getPoints(ft, v, pclass)
+                if (points.size < ftClVDensityMean) -> passed false, break
+                else passed true
 
+            if passed add v, break
 
 
 ## WRITE DATA
