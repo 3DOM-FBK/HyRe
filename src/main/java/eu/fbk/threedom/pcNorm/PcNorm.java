@@ -136,7 +136,7 @@ public class PcNorm {
                     double val = Double.parseDouble(token[REQUIRED_PARAMS_COUNT + t]);
 
                     // add the value inside the point properies array
-                    p.setDoubleProp(t, val);
+                    p.setProp(t, val);
 
                     // update sum and arithmetic mean
                     propsStats.put(prop + "_N", propsStats.get(prop + "_N") + 1);
@@ -173,7 +173,7 @@ public class PcNorm {
                 if(p.getProp(i) == -Float.MAX_VALUE)
                     continue;
 
-                double val = p.getDoubleProp(i);
+                double val = p.getProp(i);
                 double mean = propsStats.get(prop+"_mean");
                 double std =  Math.pow((val - mean), 2);
                 propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
@@ -201,12 +201,12 @@ public class PcNorm {
             // for each property
             for(int i=0; i < properties.length; i++) {
                 String prop = properties[i];
-                double val = p.getDoubleProp(i);
+                double val = p.getProp(i);
 
                 //TODO: normalize values between 0 and 1
                 double x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
-                double norm_val = 1 / (1 + Math.exp(-x));
-                p.setDoubleNormProp(i, norm_val);
+                float norm_val = 1 / (1 + (float)Math.exp(-x));
+                p.setNormProp(i, norm_val);
 
                 if(Main.DEBUG)
                     System.out.println("...." + prop + ": " + val + " -> " + norm_val);

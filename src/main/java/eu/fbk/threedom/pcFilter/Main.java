@@ -5,14 +5,20 @@ import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
 import eu.fbk.threedom.utils.Combinator;
 import eu.fbk.threedom.utils.Stats;
+import javafx.scene.input.KeyCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.*;
+
+import javax.swing.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Key;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -26,8 +32,8 @@ public class Main {
     @Option(name = "-v", aliases = { "--verbose" }, metaVar = "verbose") Boolean verbose;
 
     public static boolean DEBUG;
-    private static final int RANDOM_POINTS_NUMBER = 10000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 100;
+    private static final int RANDOM_POINTS_NUMBER = 1000;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 123456;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class NumberOfReturns PIntensity";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class LIntensity dZVariance ScanAngleRank EchoRatio";
 
@@ -42,6 +48,9 @@ public class Main {
     private HashMap<String, Float> voxelDensityStats;
 
     private PcFilter pcf;
+
+    private Scanner scanner;
+    private int menuLevel = 0;
 
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -411,7 +420,6 @@ public class Main {
             // add the 3 places case
             combinations.add(classes);
 
-
             // cycle on photogrammetry/lidar file
             for (FileType ft : FileType.values()) {
                 System.out.println("...." + ft + " cloud");
@@ -571,6 +579,131 @@ public class Main {
             writeOutput(pcf.getPoints(), "out");
         else
             writeOutput(scoredFilteredIntersectionSet, true, "out");
+
+
+        /////////////////////////////////////////////
+        // INTERACTIVE CONSOLE
+        ////////////////////////////////////////////
+        scanner = new Scanner(System.in);
+        menuLevel = 0;
+
+        do {
+            int choiche = showMainMenu();
+
+
+//            while(choiche < 1){
+//                System.out.println("problem");
+//                choiche = showMainMenu();
+//            }
+
+            switch(choiche){
+                case 1: // voxelId
+                    //System.out.println("..voxelId");
+                    showVoxel();
+                    break;
+
+                case 2: // list of points
+                    //System.out.println("..list of points");
+                    showPoints(false);
+                    menuLevel = 0;
+                    break;
+
+                case 3: // list of points
+                    //System.out.println("..list of points");
+                    showPoints(true);
+                    menuLevel = 0;
+                    break;
+
+                case 4:
+                    System.out.println("..Bye bye!");
+                    System.exit(1);
+                    break;
+
+                case -1:
+                    System.out.println("+++++++++++++++++++++");
+                    menuLevel = 1;
+                    break;
+            }
+
+        }while(true);
+    }
+
+    public int showMainMenu(){
+        menuLevel = 0;
+        System.out.println("\nMenu:\n  1. voxel key\n  2. points per class per type\n  3. points per class per type (verbose)\n  4. quit");
+
+        int choiche = 0;
+
+        try {
+            choiche = scanner.nextInt();
+        }catch(InputMismatchException e){
+            choiche = 1;
+        }
+
+        menuLevel++;
+        return choiche;
+    }
+
+    public void showVoxel(){
+        System.out.println("\nat which coordinates [x, y, z] ?");
+        int voxel;
+        boolean error = true;
+        String[] coords = null;
+
+        while(error) {
+            String choiche = scanner.nextLine();
+            if(choiche.isEmpty()) continue;
+
+            coords = choiche.split(",");
+            if(coords.length != 3) {
+                System.out.println("not a valid point");
+                return;
+            }
+
+            error = false;
+        }
+
+        Point point = new Point(Double.parseDouble(coords[0]),
+                            Double.parseDouble(coords[1]),
+                            Double.parseDouble(coords[2]));
+
+        voxel = pcf.getVoxelId(point.subPoint(pcf.getCoordShift()));
+
+        if(voxel == -1)
+            System.out.println("point is outside the bounding box");
+        else
+            System.out.println("in voxel " + voxel);
+    }
+
+    public void showPoints(boolean verbose){
+        System.out.println("\nin which voxel?");
+
+        List<Point> points;
+
+        int choiche = scanner.nextInt();
+        if(choiche < 0 || choiche > pcf.getVGrid().getSize()) {
+            System.out.println("the voxel " + choiche + " doesn't exist");
+            showMainMenu();
+        }
+
+        for (FileType ft : FileType.values()) {
+            System.out.println(ft);
+            for (PointClassification pclass : PointClassification.values()) {
+
+                points = pcf.getPoints(ft, choiche, pclass, false);
+
+                if(points.size() > 0) {
+                    if(verbose) {
+                        System.out.println(".." + pclass);
+
+                        for (Point p : points)
+                            System.out.println("...." + p.toString(pcf.getCoordShift()));
+                    }else{
+                        System.out.println(".." + pclass + " -> " + points.size() + " points");
+                    }
+                }
+            }
+        }
     }
 
 
@@ -803,9 +936,9 @@ public class Main {
 
         randomIn.add(type == FileType.PHOTOGRAMMETRIC.ordinal() ? RANDOM_FILE1_HEADER : RANDOM_FILE2_HEADER);
         for (int i=0; i < numberOfPoints; i++){
-            float rndFX = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
-            float rndFY = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE / 10 - 0.0f);
-            float rndFZ = 0.0f + rn.nextFloat() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
+            double rndFX = 0.0f + rn.nextDouble() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
+            double rndFY = 0.0f + rn.nextDouble() * (RANDOM_POINTS_CUBE_SIZE / 10 - 0.0f);
+            double rndFZ = 0.0f + rn.nextDouble() * (RANDOM_POINTS_CUBE_SIZE - 0.0f);
 
             int rndClassification = rn.nextInt(3);
 
@@ -854,7 +987,6 @@ public class Main {
         Stats.printElapsedTime(start, "processed " + fileName);
     }
 
-
     /**
      * Main method
      * @param args
@@ -866,5 +998,4 @@ public class Main {
         main.parseArgs(args);
         main.run();
     }
-
 }

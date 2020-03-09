@@ -23,13 +23,13 @@ import java.util.*;
 public class PcFilter {
 
     private float voxelSide;
-    @Setter @Getter private VoxelGrid vGrid;
+    @Setter @Getter private static VoxelGrid vGrid;
 
     private BBox bbox;
     @Getter private LinkedList points;
 
     @Setter @Getter private String[][] header, properties;
-    @Setter @Getter private HashMap<String, Float> propsStats;
+    @Setter @Getter private HashMap<String, Double> propsStats;
 
     private static Point point;
     @Setter @Getter private static Point newBboxMin;
@@ -68,9 +68,9 @@ public class PcFilter {
         // translate the boundingbox to the new position
         if(voxelSide != 0) {
             // find the components of the shift vector
-            float vectorShiftX = (int) (min.x / voxelSide) * voxelSide;
-            float vectorShiftY = (int) (min.y / voxelSide) * voxelSide;
-            float vectorShiftZ = (int) (min.z / voxelSide) * voxelSide;
+            double vectorShiftX = (int) (min.x / voxelSide) * voxelSide;
+            double vectorShiftY = (int) (min.y / voxelSide) * voxelSide;
+            double vectorShiftZ = (int) (min.z / voxelSide) * voxelSide;
             coordShift = new Point(vectorShiftX, vectorShiftY, vectorShiftZ);
 
             //System.out.println("&&&&&&&&&&&& newBboxMin " + bbox.getMin());
@@ -219,10 +219,10 @@ public class PcFilter {
                 }
 
                 // initialize statistic hashmap
-                propsStats.put(prop + "_N", 0f);
-                propsStats.put(prop + "_sum", 0f);
-                propsStats.put(prop + "_mean", 0f);
-                propsStats.put(prop + "_std", 0f);
+                propsStats.put(prop + "_N", 0d);
+                propsStats.put(prop + "_sum", 0d);
+                propsStats.put(prop + "_mean", 0d);
+                propsStats.put(prop + "_std", 0d);
             }
 
 
@@ -241,9 +241,9 @@ public class PcFilter {
                 // X Y Z R G B Class
                 if (fileType == FileType.PHOTOGRAMMETRIC) {
                     p = new Point(
-                            fileType, Float.parseFloat(token[0]),
-                            Float.parseFloat(token[1]) ,
-                            Float.parseFloat(token[2]),
+                            fileType, Double.parseDouble(token[0]),
+                            Double.parseDouble(token[1]) ,
+                            Double.parseDouble(token[2]),
                             Integer.parseInt(token[3]),
                             Integer.parseInt(token[4]),
                             Integer.parseInt(token[5]));
@@ -258,9 +258,9 @@ public class PcFilter {
                 } else if (fileType == FileType.LIDAR) {
                     p = new Point(
                             fileType,
-                            Float.parseFloat(token[0]),
-                            Float.parseFloat(token[1]) ,
-                            Float.parseFloat(token[2]) );
+                            Double.parseDouble(token[0]),
+                            Double.parseDouble(token[1]) ,
+                            Double.parseDouble(token[2]) );
 
                     p.move(p.subPoint(coordShift));
 
@@ -276,7 +276,7 @@ public class PcFilter {
                         continue;
 
                     String prop = props[t];
-                    float val = Float.parseFloat(token[shift + t]);
+                    double val = Double.parseDouble(token[shift + t]);
 
                     // TODO: range conversion (now manually set here)
                     if(prop.equalsIgnoreCase("ScanAngleRank")) {
@@ -323,9 +323,9 @@ public class PcFilter {
                 if(p.getProp(i) == -Float.MAX_VALUE)
                     continue;
 
-                float val = p.getProp(i);
-                float mean = propsStats.get(prop+"_mean");
-                float std =  (float)Math.pow((val - mean), 2);
+                double val = p.getProp(i);
+                double mean = propsStats.get(prop+"_mean");
+                double std =  Math.pow((val - mean), 2);
                 propsStats.put(prop+"_std", propsStats.get(prop+"_std") + std);
 
                 continue;
@@ -338,7 +338,7 @@ public class PcFilter {
 
         // evaluate the standard deviation for each property
         for(String prop : props)
-            propsStats.put(prop+"_std", (float)Math.sqrt(propsStats.get(prop+"_std") / propsStats.get(prop+"_N")));
+            propsStats.put(prop+"_std", Math.sqrt(propsStats.get(prop+"_std") / propsStats.get(prop+"_N")));
 
 
         ///////////////////////////////////////////////
@@ -359,10 +359,10 @@ public class PcFilter {
             for(int i=0; i<props.length; i++) {
                 String prop = props[i];
 
-                float val = p.getProp(i);
+                double val = p.getProp(i);
 
                 // normalize values between 0 and 1
-                float x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
+                double x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
                 float norm_val = 1 / (1 + (float)Math.exp(-x));
                 p.setNormProp(i, norm_val);
 
@@ -374,48 +374,6 @@ public class PcFilter {
             String formula = classTypeObj.getString("formula");
             float threshold = classTypeObj.getFloat("threshold");
 
-//            System.out.println(".." + p.toString() +
-//                    " type: " + p.getType() +
-//                    " class: " + p.getClassification().ordinal() +
-//                    " formula: " + formula);
-
-//            float score = 0;
-//
-//            if(fileType == FileType.PHOTOGRAMMETRIC) {
-//                switch(p.getClassification()) {
-//                    case C0:
-//                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity")) +
-//                                (1 - p.getNormProp(getPropertyIndex(fileType, "NumberOfReturns")));
-//                        break;
-//                    case C1:
-//                    case C2:
-//                        score = p.getNormProp(getPropertyIndex(fileType, "PIntensity"));
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//
-//            if(fileType == FileType.LIDAR) {
-//                switch(p.getClassification()) {
-//                    case C0:
-//                    case C2:
-//                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
-//                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
-//                                1 - p.getNormProp(getPropertyIndex(fileType, "EchoRatio")) +
-//                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
-//                        break;
-//                    case C1:
-//                        score = 1 - p.getNormProp(getPropertyIndex(fileType, "LIntensity")) +
-//                                p.getNormProp(getPropertyIndex(fileType, "dZVariance")) +
-//                                p.getNormProp(getPropertyIndex(fileType, "ScanAngleRank"));
-//                        break;
-//                }
-//            }
-
-            //System.out.println("score olddddddddddd " + score);
-            //p.setScore(score);
-
             p.setScore(evaluateScore(p, formula));
             p.setThreshold(threshold);
 
@@ -426,7 +384,7 @@ public class PcFilter {
     }
 
 
-    public float evaluateScore(Point p, String formula){
+    public double evaluateScore(Point p, String formula){
         StringBuilder sb = new StringBuilder();
 
         for(String str : formula.split(" ")){
@@ -440,7 +398,7 @@ public class PcFilter {
 
         //System.out.println("formulaa: " + sb);
 
-        return (float)Expression.eval(sb.toString());
+        return Expression.eval(sb.toString());
     }
 
 
@@ -535,6 +493,10 @@ public class PcFilter {
         }
 
         return list;
+    }
+
+    public int getVoxelId(Point p){
+        return getVGrid().getVoxelId(p);
     }
 
     public String toString(){

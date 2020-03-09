@@ -112,5 +112,9 @@ r ---> Size of a combination to be printed */
 
             System.out.print("\n");
         }
+
+        double test = 5435345.235467;
+        System.out.println("double: " + test);
+        System.out.println("float: " + (float)test);
     }
 }

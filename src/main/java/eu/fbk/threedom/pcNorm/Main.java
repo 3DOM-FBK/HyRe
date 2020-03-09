@@ -143,7 +143,7 @@ public class Main {
             int n = 0;
 //                for (Object v : propValues)
             for (Point pnt : points)
-                values[n++] = pnt.getDoubleNormProp(p);
+                values[n++] = pnt.getNormProp(p);
 
             if (Main.DEBUG)
                 System.out.println(".." + prop + " values (normalized) " + Arrays.toString(values));
@@ -175,7 +175,7 @@ public class Main {
 
                 pointList = (ArrayList<Point>) pcn.getPoints(ft_photo, pc);
                 for (Point p : pointList)
-                    propValues.add(p.getDoubleNormProp(k));
+                    propValues.add(p.getNormProp(k));
 
                 if(propValues.isEmpty()) break;
 

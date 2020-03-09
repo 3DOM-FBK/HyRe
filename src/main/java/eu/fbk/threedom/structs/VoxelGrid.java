@@ -8,17 +8,17 @@ import eu.fbk.threedom.pcFilter.Main;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.vecmath.Vector3f;
+import javax.vecmath.Vector3d;
 import java.util.*;
 
 public class VoxelGrid {
 
     private BBox bbox;
-    private float voxelSide;
+    private double voxelSide;
     private int width, height, depth;
     private LinkedList points;
     @Getter @Setter private int size;
-    @Getter @Setter private float shift;
+    @Getter @Setter private double shift;
     @Getter @Setter private Voxel[] voxels;
 
     private List<Set<Integer>> voxelsList;
@@ -27,11 +27,11 @@ public class VoxelGrid {
     @Setter @Getter private HashMap<String, Float> propsStats;
 
 
-    public VoxelGrid(LinkedList points, BBox bbox, float voxelSide){
+    public VoxelGrid(LinkedList points, BBox bbox, double voxelSide){
         this.bbox = bbox;
         this.voxelSide = voxelSide;
         this.points = points;
-        Vector3f bbSize = bbox.size();
+        Vector3d bbSize = bbox.size();
 
         width = (int) (bbSize.x / voxelSide + 1);
         height = (int) (bbSize.y / voxelSide + 1);
@@ -119,7 +119,7 @@ public class VoxelGrid {
      * @param z
      * @return
      */
-    public int getVoxelId(float x, float y, float z) {
+    public int getVoxelId(double x, double y, double z) {
 //        // old lake version
 //        int xv = (int) (((x - bbox.getMin().x) / voxelSide));
 //        int yv = (int) (((y - bbox.getMin().y) / voxelSide));
@@ -132,9 +132,9 @@ public class VoxelGrid {
 
         // mike (correct?) version
         // find the coordinates of where to move the min of the bounding box
-        float newBboxMinX = bbox.getMin().x - (int)(bbox.getMin().x / voxelSide) * voxelSide;
-        float newBboxMinY = bbox.getMin().y - (int)(bbox.getMin().y / voxelSide) * voxelSide;
-        float newBboxMinZ = bbox.getMin().z - (int)(bbox.getMin().z / voxelSide) * voxelSide;
+        double newBboxMinX = bbox.getMin().x - (int)(bbox.getMin().x / voxelSide) * voxelSide;
+        double newBboxMinY = bbox.getMin().y - (int)(bbox.getMin().y / voxelSide) * voxelSide;
+        double newBboxMinZ = bbox.getMin().z - (int)(bbox.getMin().z / voxelSide) * voxelSide;
 
         int xv = (int) ( (x - bbox.getMin().x + newBboxMinX) / voxelSide);
         int yv = (int) ( (y - bbox.getMin().y + newBboxMinY) / voxelSide);
@@ -152,29 +152,34 @@ public class VoxelGrid {
         return key;
     }
 
-//    public Voxel getVoxel(float x, float y, float z) {
-////        int xv = (int) ((x - bbox.getMin().x) /voxelSide);
-////        int yv = (int) ((y - bbox.getMin().y) /voxelSide);
-////        int zv = (int) ((z - bbox.getMin().z) /voxelSide);
-//        int xv = (int) (x / voxelSide);
-//        int yv = (int) (y / voxelSide);
-//        int zv = (int) (z / voxelSide);
-//
-//        int key = id(xv, yv, zv);
-//        //System.out.println("key: " + key);
-//        if (key < 0 || key >= size) return null;
-//
-//        return voxels[key];
-//    }
+    public int getVoxelId(Point p){
+        return getVoxelId(p.x, p.y, p.z);
+    }
 
+    /**
+     *
+     * @param key
+     * @return
+     */
     public Voxel getVoxel(int key) {
         return voxels[key];
     }
 
+    /**
+     *
+     * @param key
+     * @param v
+     * @return
+     */
     public Voxel setVoxel(int key, Voxel v) {
         return voxels[key] = v;
     }
 
+    /**
+     *
+     * @param fileType
+     * @return
+     */
     public List<Point> getPoints(FileType fileType){
         Set voxelSet = getVoxels(fileType);
         List<Point> list = new ArrayList<>();
@@ -185,6 +190,11 @@ public class VoxelGrid {
         return list;
     }
 
+    /**
+     *
+     * @param voxelId
+     * @return
+     */
     public List<Point> getPoints(int voxelId){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -260,7 +270,13 @@ public class VoxelGrid {
         return list;
     }
 
-
+    /**
+     *
+     * @param fileType
+     * @param voxelId
+     * @param scoreCheck
+     * @return
+     */
     public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -287,6 +303,15 @@ public class VoxelGrid {
         return list;
     }
 
+    /**
+     *
+     * @param fileType
+     * @param voxelId
+     * @param pointType
+     * @param scoreCheck
+     * @param coordShift
+     * @return
+     */
     public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck, Point coordShift){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -322,49 +347,34 @@ public class VoxelGrid {
         return list;
     }
 
-//    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, float threshold){
-//        List<Point> list = new ArrayList<>();
-//        Voxel vox = getVoxel(voxelId);
-//
-//        if(vox == null)
-//            return null;
-//
-//        LlNode n = vox.getHead();
-//        while(n != null) {
-//            Point p = (Point)n.value();
-//            if(p.getType() == fileType && p.getClassification() == pointType && p.getScore() <= threshold)
-//                list.add(p);
-//
-//            // exit condition
-//            if(!n.hasNext() || n == vox.getTail()) break;
-//            n = n.next();
-//        }
-//
-//        return list;
-//    }
+    /**
+     *
+     * @param fileType
+     * @return
+     */
+    public Set<Integer> getVoxels(FileType fileType){
+        Set voxelsSet = new LinkedHashSet<Integer>();
 
-    public int getNumberOfPoint(FileType fileType, int voxelId, PointClassification pointType){
-        Voxel vox = getVoxel(voxelId);
-
-        if(vox == null)
-            return -1;
-
-        int count = 0;
-
-        LlNode n = vox.getHead();
-        while(n != null) {
-            Point p = (Point)n.value();
-            if(p.getType() == fileType && p.getClassification() == pointType)
-                count++;
-
-            // exit condition
-            if(!n.hasNext() || n == vox.getTail()) break;
-            n = n.next();
+        if(fileType == FileType.PHOTOGRAMMETRIC){
+            voxelsSet.addAll(voxelsList.get(0));
+            voxelsSet.addAll(voxelsList.get(1));
+            voxelsSet.addAll(voxelsList.get(2));
         }
 
-        return count;
+        if(fileType == FileType.LIDAR){
+            voxelsSet.addAll(voxelsList.get(3));
+            voxelsSet.addAll(voxelsList.get(4));
+            voxelsSet.addAll(voxelsList.get(5));
+        }
+
+        return voxelsSet;
     }
 
+    /**
+     *
+     * @param fileTypes
+     * @return
+     */
     public Set<Integer> getVoxels(FileType[] fileTypes){
         Set voxelsSet = new LinkedHashSet<Integer>();
 
@@ -385,24 +395,12 @@ public class VoxelGrid {
         return voxelsSet;
     }
 
-    public Set<Integer> getVoxels(FileType fileType){
-        Set voxelsSet = new LinkedHashSet<Integer>();
-
-        if(fileType == FileType.PHOTOGRAMMETRIC){
-            voxelsSet.addAll(voxelsList.get(0));
-            voxelsSet.addAll(voxelsList.get(1));
-            voxelsSet.addAll(voxelsList.get(2));
-        }
-
-        if(fileType == FileType.LIDAR){
-            voxelsSet.addAll(voxelsList.get(3));
-            voxelsSet.addAll(voxelsList.get(4));
-            voxelsSet.addAll(voxelsList.get(5));
-        }
-
-        return voxelsSet;
-    }
-
+    /**
+     *
+     * @param fileType
+     * @param pointType
+     * @return
+     */
     public Set<Integer> getVoxels(FileType fileType, PointClassification pointType){
         switch (pointType){
             case C0:
@@ -415,6 +413,12 @@ public class VoxelGrid {
         }
     }
 
+    /**
+     *
+     * @param fileType
+     * @param pointTypes
+     * @return
+     */
     public Set<Integer> getVoxels(FileType fileType, String[] pointTypes){
         Set<Integer> voxels = getVoxels(fileType);
 

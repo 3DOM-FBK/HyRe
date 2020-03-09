@@ -3,9 +3,9 @@ package eu.fbk.threedom.pc;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.vecmath.Vector3f;
+import javax.vecmath.Vector3d;
 
-public class Point extends Vector3f {
+public class Point extends Vector3d {
 
 //    @Setter @Getter private int id;
 
@@ -17,49 +17,42 @@ public class Point extends Vector3f {
     @Getter @Setter private FileType type; // 0 photogrammetric, 1 lidar
     @Getter @Setter private PointClassification classification; // 0 1 2
 
-    @Getter @Setter private float score;
+    @Getter @Setter private double score;
     @Getter @Setter private float threshold;
 
-    private float[] propertiesValues;
+    private double[] propertiesValues;
     private float[] propertiesNormValues;
 
-    private double[] double_propertiesValues;
-    private double[] double_propertiesNormValues;
-
-    public Point(float x, float y, float z) {
+    public Point(double x, double y, double z) {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
-
-//        propsDictionary = new HashMap<>();
     }
 
-    public Point(/*int id, */FileType type,  float x, float y, float z) {
-//        this.id = id;
+    public Point(FileType type,  double x, double y, double z) {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
 
-        propertiesValues = new float[type.getProps().length];
-        propertiesNormValues = new float[type.getProps().length];
+//        propertiesValues = new float[type.getProps().length];
+//        propertiesNormValues = new float[type.getProps().length];
 
-        double_propertiesValues = new double[type.getProps().length];
-        double_propertiesNormValues = new double[type.getProps().length];
+        propertiesValues = new double[type.getProps().length];
+        propertiesNormValues = new float[type.getProps().length];
     }
 
-    public Point(/*int id,*/ FileType type, float x, float y, float z, int r, int g, int b) {
-//        this.id = id;
+    public Point(FileType type, double x, double y, double z, int r, int g, int b) {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
 
-        propertiesValues = new float[type.getProps().length];
-        propertiesNormValues = new float[type.getProps().length];
+//        propertiesValues = new float[type.getProps().length];
+//        propertiesNormValues = new float[type.getProps().length];
 
-        double_propertiesValues = new double[type.getProps().length];
-        double_propertiesNormValues = new double[type.getProps().length];
+        propertiesValues = new double[type.getProps().length];
+        propertiesNormValues = new float[type.getProps().length];
     }
 
-    public void move(float x, float y, float z){
+    public void move(double x, double y, double z){
         super.x = x; super.y = y; super.z = z;
     }
 
@@ -88,10 +81,10 @@ public class Point extends Vector3f {
         sb.append(classification.type + " ");
 
         if(normalized)
-            for(float prop : propertiesNormValues)
+            for(double prop : propertiesNormValues)
                 sb.append(String.valueOf(prop) + " ");
         else
-            for(float prop : propertiesValues)
+            for(double prop : propertiesValues)
                 sb.append(String.valueOf(prop) + " ");
 
         sb.append(score);
@@ -118,10 +111,10 @@ public class Point extends Vector3f {
         }
 
         if(normalized)
-            for(double prop : double_propertiesNormValues)
+            for(double prop : propertiesNormValues)
                 sb.append(String.valueOf(prop) + " ");
         else
-            for(double prop : double_propertiesValues)
+            for(double prop : propertiesValues)
                 sb.append(String.valueOf(prop) + " ");
 
         return sb.toString();
@@ -132,34 +125,20 @@ public class Point extends Vector3f {
                 + (z + min.getZ()) + ")";
     }
 
-//    public void setProp(String property, Float value){
-//        propsDictionary.put(property, value);
-//    }
-//
-//    public float getProp(String property){
-//        if(!propsDictionary.containsKey(property))
-//            return -Float.MAX_VALUE;
-//        return propsDictionary.get(property);
-//    }
+//    public void setProp(int propertyIndex, Float value){propertiesValues[propertyIndex] = value;}
+//    public void setNormProp(int propertyIndex, Float value){propertiesNormValues[propertyIndex] = value;}
 
-    public void setProp(int propertyIndex, Float value){
-        propertiesValues[propertyIndex] = value;
-    }
-    public void setNormProp(int propertyIndex, Float value){
-        propertiesNormValues[propertyIndex] = value;
-    }
+    public void setProp(int propertyIndex, Double value){ propertiesValues[propertyIndex] = value;}
+    public void setNormProp(int propertyIndex, float value){propertiesNormValues[propertyIndex] = value;    }
 
-    public void setDoubleProp(int propertyIndex, Double value){ double_propertiesValues[propertyIndex] = value;}
-    public void setDoubleNormProp(int propertyIndex, Double value){double_propertiesNormValues[propertyIndex] = value;    }
+//    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
+//    public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
 
-    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
+    public double getProp(int propertyIndex){return propertiesValues[propertyIndex];}
     public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
 
-    public double getDoubleProp(int propertyIndex){return double_propertiesValues[propertyIndex];}
-    public double getDoubleNormProp(int propertyIndex){return double_propertiesNormValues[propertyIndex];}
-
-    public float length(Point p){
-        return (float)Math.sqrt(this.dot(p));
+    public double length(Point p){
+        return Math.sqrt(this.dot(p));
     }
 
     public Point addPoint(Point p){
@@ -170,17 +149,17 @@ public class Point extends Vector3f {
         return  new Point(this.x - p.x, this.y - p.y, this.z - p.z);
     }
 
-    public Point mulPoint(float s){
+    public Point mulPoint(double s){
         return  new Point(this.x * s, this.y * s, this.z * s);
     }
 
-    public Point divPoint(float s){
+    public Point divPoint(double s){
         return  new Point(this.x * ( 1.0f / s ), this.y * ( 1.0f / s ), this.z * ( 1.0f / s ));
     }
 
     public static void main(String[] args){
         Point p = new Point(FileType.PHOTOGRAMMETRIC, 1, 2, 3);
-        p.setProp(0, 666.0f);
+        p.setProp(0, 666.0);
 
         System.out.println(p.toString());
         System.out.println("\tintensity: " + p.getProp(0));

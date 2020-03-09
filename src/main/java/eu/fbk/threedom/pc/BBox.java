@@ -3,6 +3,7 @@ package eu.fbk.threedom.pc;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 public class BBox {
@@ -27,7 +28,7 @@ public class BBox {
         return max.addPoint(min).mulPoint(0.5f);
     }
 
-    public Vector3f size() {
+    public Vector3d size() {
         return max.subPoint(min);
     }
 
