@@ -474,25 +474,17 @@ public class PcFilter {
         return list;
     }
 
-    public List<Point> getPoints(FileType fileType, PointClassification pointType, boolean voxelGrid){
-        if(voxelGrid)
-            return vGrid.getPoints(fileType);
+    public List<Point> getPoints(FileType fileType, PointClassification pointType){
+        Set<Integer> voxelSet = getVGrid().getVoxels(fileType, pointType);
 
-        // else
-        List<Point> list = new ArrayList<>();
+        if(voxelSet == null) return null;
+        List<Point> points = new ArrayList<>();
 
-        LlNode n = points.head();
-        while(n != null) {
-            Point p = (Point)n.value();
-            if(p.getType() == fileType && p.getClassification() == pointType)
-                list.add(p);
+        // extract values from voxels
+        for (int v : voxelSet)
+            points.addAll( (ArrayList<Point>) getPoints(fileType, v, pointType) );
 
-            // exit condition
-            if(!n.hasNext() ) break;
-            n = n.next();
-        }
-
-        return list;
+        return points;
     }
 
     public int getVoxelId(Point p){

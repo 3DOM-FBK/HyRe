@@ -83,7 +83,14 @@ public class ConsoleMenu {
 
                             switch(sel) {
                                 case 1: System.out.println("insert new voxelSide:");
-                                    Float voxelSide = scanner.nextFloat();
+                                    Float voxelSide;
+                                    if (!scanner.hasNextFloat()) {
+                                        System.out.println("enter only integers/float! ");
+                                        scanner.next(); // discard
+                                        continue;
+                                    }
+                                    voxelSide = scanner.nextFloat();
+
                                     System.out.println("voxelSide: " + voxelSide);
                                     break;
 
