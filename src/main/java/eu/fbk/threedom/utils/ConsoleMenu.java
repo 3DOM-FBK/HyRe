@@ -16,7 +16,8 @@ public class ConsoleMenu {
     }
 
     private int select(int selected){
-//        System.out.println("  select(" + selected + ")");
+        //System.out.println("  menuLevel(" + menuLevel + ")");
+        //System.out.println("  select(" + selected + ")");
         int sel;
 
         switch(menuLevel) {
@@ -26,48 +27,60 @@ public class ConsoleMenu {
             case 1:
                 switch(selected){
                     case 1: System.out.println("\nprint info:\n 1. location\n 2. class\n 3. voxel\n 4. back");
-                        sel = scanner.nextInt();
-                        switch(sel){
-                            case 1: System.out.println("insert location:");
-                                String location = scanner.next();
-                                System.out.println("location: " + location);
-
-                                selected = 4; // jump to case 4
-                                break;
-
-                            case 2: System.out.println("insert class:");
-                                int classType = scanner.nextInt();
-                                System.out.println("class: " + classType);
-
-                                selected = 4; // jump to case 4
-                                break;
-
-                            case 3: System.out.println("insert voxel:");
-                                int voxel = scanner.nextInt();
-                                System.out.println("voxel: " + voxel);
-
-                                selected = 4; // jump to case 4
-                                break;
-
-                            case 4: selected = sel;
-                                break;
+                        while (true) {
+                            if (!scanner.hasNextInt()) {
+                                System.out.println("enter only integers! ");
+                                scanner.next(); // discard
+                                continue;
+                            }
+                            sel = scanner.nextInt();
+                            break;
                         }
 
+                        switch (sel) {
+                            case 1:
+                                System.out.println("insert location:");
+                                String location = scanner.next();
+                                System.out.println("location: " + location);
+                                break;
+
+                            case 2:
+                                System.out.println("insert class:");
+                                int classType = scanner.nextInt();
+                                System.out.println("class: " + classType);
+                                break;
+
+                            case 3:
+                                System.out.println("insert voxel:");
+                                int voxel = scanner.nextInt();
+                                System.out.println("voxel: " + voxel);
+                                break;
+
+                            default: break;
+                        }
+
+                        selected = 4;
                         backIndex = 4;
                         return selected;
 
                     case 2: System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
-                        sel = scanner.nextInt();
+                        while (true) {
+                            if (!scanner.hasNextInt()) {
+                                System.out.println("enter only integers! ");
+                                scanner.next(); // discard
+                                continue;
+                            }
+                            sel = scanner.nextInt();
+                            break;
+                        }
+
                         switch(sel) {
                             case 1: System.out.println("insert new voxelSide:");
                                 Float voxelSide = scanner.nextFloat();
                                 System.out.println("voxelSide: " + voxelSide);
-
-                                selected = 2; // jump to case 2
                                 break;
 
-                            case 2: selected = sel;
-                                break;
+                            default: break;
                         }
 
                         backIndex = 2;
@@ -75,11 +88,19 @@ public class ConsoleMenu {
 
                     case 3: quit();
                 }
-                backIndex = 3;
-                break;
+                System.out.println("not a valid option!");
+                return -1;
+                //break;
         }
 
-        return scanner.nextInt();
+        while (true) {
+            if (!scanner.hasNextInt()) {
+                System.out.println("enter only integers! ");
+                scanner.next(); // discard
+                continue;
+            }
+            return scanner.nextInt();
+        }
     }
 
     private void run() {
@@ -87,20 +108,30 @@ public class ConsoleMenu {
         int selected = 0;
 
         do {
+            System.out.println("\n  .menuLevel : " + menuLevel);
+            System.out.println("  .backIndex : " + backIndex);
+            System.out.println("  .selected : " + selected);
+
             if (selected == backIndex) {
-//                System.out.println("backindex " + backIndex);
+//                System.out.println("11111");
+                //System.out.println("backIndex " + backIndex);
                 menuLevel--;
-                selected = history.pop();
-                backIndex = -1;
+                if(backIndex != -1) {
+//                    System.out.println("222222");
+                    selected = history.pop();
+                    backIndex = -1;
+                }//else selected = 0;
             } else {
                 menuLevel++;
                 history.push(selected);
             }
 
-//            System.out.println("history: " + history);
-//            System.out.println("  menuLevel: " + menuLevel);
+            //System.out.println("history: " + history);
+            System.out.println("  ..menuLevel : " + menuLevel);
+            System.out.println("  ..backIndex : " + backIndex);
 
             selected = select(selected);
+            System.out.println("  ...selected : " + selected);
         } while (true);
     }
 
