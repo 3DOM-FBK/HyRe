@@ -26,61 +26,66 @@ public class ConsoleMenu {
 
             case 1:
                 switch(selected){
-                    case 1: System.out.println("\nprint info:\n 1. location\n 2. class\n 3. voxel\n 4. back");
+                    case 1:
                         while (true) {
+                            System.out.println("\nprint info:\n 1. location\n 2. class\n 3. voxel\n 4. back");
                             if (!scanner.hasNextInt()) {
                                 System.out.println("enter only integers! ");
                                 scanner.next(); // discard
                                 continue;
                             }
                             sel = scanner.nextInt();
+
+                            switch (sel) {
+                                case 1:
+                                    System.out.println("insert location:");
+                                    String location = scanner.next();
+                                    // check if valid location
+                                    System.out.println("location: " + location);
+                                    break;
+
+                                case 2:
+                                    System.out.println("insert class:");
+                                    // check if integer, check if a valid class
+                                    int classType = scanner.nextInt();
+                                    System.out.println("class: " + classType);
+                                    break;
+
+                                case 3:
+                                    System.out.println("insert voxel:");
+                                    // check if integer, check if valid voxel
+                                    int voxel = scanner.nextInt();
+                                    System.out.println("voxel: " + voxel);
+                                    break;
+                                case 4: break;
+                                default: System.out.println("no menu selection available! "); continue;
+                            }
                             break;
-                        }
-
-                        switch (sel) {
-                            case 1:
-                                System.out.println("insert location:");
-                                String location = scanner.next();
-                                System.out.println("location: " + location);
-                                break;
-
-                            case 2:
-                                System.out.println("insert class:");
-                                int classType = scanner.nextInt();
-                                System.out.println("class: " + classType);
-                                break;
-
-                            case 3:
-                                System.out.println("insert voxel:");
-                                int voxel = scanner.nextInt();
-                                System.out.println("voxel: " + voxel);
-                                break;
-
-                            default: break;
                         }
 
                         selected = 4;
                         backIndex = 4;
                         return selected;
 
-                    case 2: System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
+                    case 2:
                         while (true) {
+                            System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
                             if (!scanner.hasNextInt()) {
                                 System.out.println("enter only integers! ");
                                 scanner.next(); // discard
                                 continue;
                             }
                             sel = scanner.nextInt();
+
+                            switch(sel) {
+                                case 1: System.out.println("insert new voxelSide:");
+                                    Float voxelSide = scanner.nextFloat();
+                                    System.out.println("voxelSide: " + voxelSide);
+                                    break;
+                                case 2: break;
+                                default: System.out.println("no menu selection available! "); continue;
+                            }
                             break;
-                        }
-
-                        switch(sel) {
-                            case 1: System.out.println("insert new voxelSide:");
-                                Float voxelSide = scanner.nextFloat();
-                                System.out.println("voxelSide: " + voxelSide);
-                                break;
-
-                            default: break;
                         }
 
                         backIndex = 2;
