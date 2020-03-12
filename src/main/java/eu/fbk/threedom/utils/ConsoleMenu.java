@@ -57,14 +57,18 @@ public class ConsoleMenu {
                                     int voxel = scanner.nextInt();
                                     System.out.println("voxel: " + voxel);
                                     break;
-                                case 4: break;
+                                case 4:
+                                    history.clear();
+                                    menuLevel = -1;
+                                    return selected;
+
                                 default: System.out.println("no menu selection available! "); continue;
                             }
                             break;
                         }
 
-                        selected = 4;
-                        backIndex = 4;
+                        selected = history.pop();
+                        menuLevel--;
                         return selected;
 
                     case 2:
@@ -82,17 +86,24 @@ public class ConsoleMenu {
                                     Float voxelSide = scanner.nextFloat();
                                     System.out.println("voxelSide: " + voxelSide);
                                     break;
-                                case 2: break;
+
+                                case 2:
+                                    history.clear();
+                                    menuLevel = -1;
+                                    return selected;
+
                                 default: System.out.println("no menu selection available! "); continue;
                             }
                             break;
                         }
 
-                        backIndex = 2;
+                        selected = history.pop();
+                        menuLevel--;
                         return selected;
 
                     case 3: quit();
                 }
+                history.pop();
                 System.out.println("not a valid option!");
                 return -1;
                 //break;
@@ -113,9 +124,9 @@ public class ConsoleMenu {
         int selected = 0;
 
         do {
-            System.out.println("\n  .menuLevel : " + menuLevel);
-            System.out.println("  .backIndex : " + backIndex);
-            System.out.println("  .selected : " + selected);
+//            System.out.println("\n  .menuLevel : " + menuLevel);
+//            System.out.println("  .backIndex : " + backIndex);
+//            System.out.println("  .selected : " + selected);
 
             if (selected == backIndex) {
 //                System.out.println("11111");
@@ -131,12 +142,12 @@ public class ConsoleMenu {
                 history.push(selected);
             }
 
-            //System.out.println("history: " + history);
-            System.out.println("  ..menuLevel : " + menuLevel);
-            System.out.println("  ..backIndex : " + backIndex);
+            System.out.println("history: " + history);
+//            System.out.println("  ..menuLevel : " + menuLevel);
+//            System.out.println("  ..backIndex : " + backIndex);
 
             selected = select(selected);
-            System.out.println("  ...selected : " + selected);
+//            System.out.println("  ...selected : " + selected);
         } while (true);
     }
 

@@ -1,5 +1,6 @@
 package eu.fbk.threedom.pcFilter;
 
+import com.sun.javafx.scene.paint.GradientUtils;
 import eu.fbk.threedom.pc.FileType;
 import eu.fbk.threedom.pc.Point;
 import eu.fbk.threedom.pc.PointClassification;
@@ -590,66 +591,28 @@ public class Main {
         history = new Stack<>();
 
         do {
+//            System.out.println("\n  .menuLevel : " + menuLevel);
+//            System.out.println("  .backIndex : " + backIndex);
+//            System.out.println("  .selected : " + selected);
+
             if (selected == backIndex) {
-//                System.out.println("backindex " + backIndex);
                 menuLevel--;
-                selected = history.pop();
-                backIndex = -1;
+                if(backIndex != -1) {
+                    selected = history.pop();
+                    backIndex = -1;
+                }
             } else {
                 menuLevel++;
                 history.push(selected);
             }
-//            System.out.println("history: " + history);
-//            System.out.println("  menuLevel: " + menuLevel);
+
+//            System.out.println("  ..menuLevel : " + menuLevel);
+//            System.out.println("  ..backIndex : " + backIndex);
 
             selected = printMenu(selected);
-
+//            System.out.println("history: " + history);
+//            System.out.println("  ...selected : " + selected);
         } while (true);
-
-
-//
-//        scanner = new Scanner(System.in);
-//        menuLevel = 0;
-//
-//        do {
-//            int choiche = showMainMenu();
-//
-//
-////            while(choiche < 1){
-////                System.out.println("problem");
-////                choiche = showMainMenu();
-////            }
-//
-//            switch(choiche){
-//                case 1: // voxelId
-//                    //System.out.println("..voxelId");
-//                    showVoxel();
-//                    break;
-//
-//                case 2: // list of points
-//                    //System.out.println("..list of points");
-//                    showPoints(false);
-//                    menuLevel = 0;
-//                    break;
-//
-//                case 3: // list of points
-//                    //System.out.println("..list of points");
-//                    showPoints(true);
-//                    menuLevel = 0;
-//                    break;
-//
-//                case 4:
-//                    System.out.println("..Bye bye!");
-//                    System.exit(1);
-//                    break;
-//
-//                case -1:
-//                    System.out.println("+++++++++++++++++++++");
-//                    menuLevel = 1;
-//                    break;
-//            }
-//
-//        }while(true);
     }
 
     public void quit(){System.out.println("..Bye bye!"); System.exit(1);}
@@ -660,16 +623,16 @@ public class Main {
         voxel = pcf.getVoxelId(location.subPoint(pcf.getCoordShift()));
 
         if(voxel == -1)
-            System.out.println("the location is outside of the bounding box");
+            System.out.println("the location " + location.toString() + " is outside of the bounding box");
         else
-            System.out.println("the location belongs to voxel " + voxel);
+            System.out.println("the location " + location.toString() + " falls into voxel " + voxel);
     }
 
     public void printPoints(int voxel, boolean verbose){
         List<Point> points;
 
         for (FileType ft : FileType.values()) {
-            System.out.println(ft);
+            System.out.println("\n" + ft);
             for (PointClassification pclass : PointClassification.values()) {
 
                 points = pcf.getPoints(ft, voxel, pclass, false);
@@ -688,6 +651,10 @@ public class Main {
         }
     }
 
+    public void printClass(){
+        //TODO:
+    }
+
     public int printMenu(int selected){
         //System.out.println("  printMenu(" + selected + ")");
         int sel;
@@ -699,117 +666,167 @@ public class Main {
 
             case 1:
                 switch(selected){
-                    case 1: System.out.println("\nprint info:\n 1. location\n 2. class\n 3. voxel\n 4. back");
-                        sel = scanner.nextInt();
-                        switch(sel){
-                            case 1:
-                                String location;// = scanner.next();
-                                String[] coords;
+                    case 1:
+                        while (true) {
+                            System.out.println("\nprint info:\n 1. location\n 2. class\n 3. voxel\n 4. back");
+                            if (!scanner.hasNextInt()) {
+                                System.out.println("enter only integers! ");
+                                scanner.next(); // discard
+                                continue;
+                            }
+                            sel = scanner.nextInt();
 
-                                do {
-                                    System.out.println("insert a valid location:");
-                                    location = scanner.next();
-                                    //System.out.println("location: " + location);
+                            switch (sel) {
+                                case 1:
+                                    String location;// = scanner.next();
+                                    String[] coords;
 
-                                    error = false;
-                                    if (location.isEmpty()) error = true;
-                                    coords = location.split(",");
-                                    if (coords.length != 3) error = true;
-                                }while(error);
+                                    do {
+                                        System.out.println("insert a valid location:");
+                                        location = scanner.next(); //System.out.println("location: " + location);
 
-                                Point point = new Point(Double.parseDouble(coords[0]),
-                                        Double.parseDouble(coords[1]),
-                                        Double.parseDouble(coords[2]));
+                                        error = false;
+                                        if (location.isEmpty()) error = true;
+                                        coords = location.split(",");
+                                        if (coords.length != 3) error = true;
+                                    } while (error);
 
-                                printLocation(point);
+                                    Point point = new Point(Double.parseDouble(coords[0]),
+                                            Double.parseDouble(coords[1]),
+                                            Double.parseDouble(coords[2]));
 
-                                selected = 4; // jump to case 4
-                                break;
+                                    printLocation(point);
+                                    break;
 
-                            case 2:
-                                int classType;
+                                case 2:
+                                    int classType = -1;
 
-                                do {
-                                    System.out.println("insert class:");
-                                    classType = scanner.nextInt();
-                                    //System.out.println("class: " + classType);
+                                    // check integer
+                                    do {
+                                        error = false;
+                                        System.out.println("insert valid class:");
+                                        if (!scanner.hasNextInt()) {
+                                            System.out.println("enter only integers! ");
+                                            scanner.next(); // discard
+                                            error = true;
+                                            continue;
+                                        }
+                                        classType = scanner.nextInt();
 
-                                    error = false;
-                                    if (classType == -1) error = true;
-                                }while(error);
+                                        // check if class exsist
+                                        if (PointClassification.parse(classType) == null) {error = true; continue;}
 
-                                System.out.println("not implemented");
+                                        break;
+                                    } while (error);
 
-                                selected = 4; // jump to case 4
-                                break;
+                                    // do something with the class
+                                    System.out.println("class " + PointClassification.parse(classType).name() + " ok now what?");
 
-                            case 3:
-                                int voxel;
+                                    break;
 
-                                do {
-                                    System.out.println("insert valid voxel:");
-                                    voxel = scanner.nextInt();
-                                    //System.out.println("class: " + classType);
+                                case 3:
+                                    int voxel = -1;
 
-                                    error = false;
-                                    if (voxel < 0 || voxel > pcf.getVGrid().getSize()) error = true;
-                                }while(error);
+                                    // check integer
+                                    do{
+                                        error = false;
+                                        System.out.println("insert valid voxel:");
+                                        if (!scanner.hasNextInt()) {
+                                            System.out.println("enter only integers! ");
+                                            scanner.next(); // discard
+                                            error = true;
+                                            continue;
+                                        }
+                                        voxel = scanner.nextInt();
 
-                                String yn;
-                                boolean verbose;
+                                        // check if voxel exsist
+                                        System.out.println(pcf.getVGrid().getSize());
+                                        if (voxel < 0 || voxel >= pcf.getVGrid().getSize()) {
+                                            System.out.println("the voxel doens't exsist");
+                                            error = true;
+                                            continue;
+                                        }
 
-                                do {
-                                    System.out.println("print verbose? (y/n)");
-                                    yn = scanner.next();
+                                        break;
+                                    }while(error);
 
-                                    error = false;
-                                    if (!yn.equals("y") && !yn.equals("n")) error = true;
-                                }while(error);
+                                    String yn;
+                                    boolean verbose;
 
-                                verbose = yn.equals("y") ? true : false;
-                                printPoints(voxel, verbose);
+                                    do {
+                                        System.out.println("print verbose? (y/n)");
+                                        yn = scanner.next();
 
-                                selected = 4; // jump to case 4
-                                break;
+                                        error = false;
+                                        if (!yn.equals("y") && !yn.equals("n")) error = true;
+                                    } while (error);
 
-                            case 4:
-                                selected = sel;
-                                break;
+                                    verbose = yn.equals("y") ? true : false;
+                                    printPoints(voxel, verbose);
+                                    break;
+
+                                case 4:
+                                    history.clear();
+                                    menuLevel = -1;
+                                    return selected;
+
+                                default: System.out.println("print info: no menu selection available! "); continue;
+                            }
+                            break;
                         }
 
-                        backIndex = 4;
+                        selected = history.pop();
+                        menuLevel--;
                         return selected;
 
-                    case 2: System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
-                        sel = scanner.nextInt();
-                        switch(sel) {
-                            case 1: System.out.println("insert new voxelSide:");
-                                Float voxelSide = scanner.nextFloat();
-                                System.out.println("voxelSide: " + voxelSide);
+                    case 2:
+                        while (true) {
+                            System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
+                            if (!scanner.hasNextInt()) {
+                                System.out.println("enter only integers! ");
+                                scanner.next(); // discard
+                                continue;
+                            }
+                            sel = scanner.nextInt();
 
-                                selected = 2; // jump to case 2
-                                break;
+                            switch (sel) {
+                                case 1:
+                                    System.out.println("insert new voxelSide:");
+                                    //TODO: check if float
+                                    Float voxelSide = scanner.nextFloat();
+                                    System.out.println("voxelSide: " + voxelSide);
+                                    break;
 
-                            case 2:
-                                selected = sel;
-                                break;
+                                case 2:
+                                    history.clear();
+                                    menuLevel = -1;
+                                    return selected;
+
+                                default: System.out.println("change parameters: no menu selection available! "); continue;
+                            }
+                            break;
                         }
 
-                        backIndex = 2;
+                        selected = history.pop();
+                        menuLevel--;
                         return selected;
 
-                    case 3:
-                        quit();
-
-                    default:
-                        System.out.println("to manage");
+                    case 3: quit();
 
                 }
-                backIndex = 3;
-                break;
+                history.pop();
+                System.out.println("no menu selection available!");
+                return -1;
         }
 
-        return scanner.nextInt();
+        while (true) {
+            if (!scanner.hasNextInt()) {
+                System.out.println("enter only integers! ");
+                scanner.next(); // discard
+                continue;
+            }
+            return scanner.nextInt();
+        }
     }
 
     public void showVoxel(){
