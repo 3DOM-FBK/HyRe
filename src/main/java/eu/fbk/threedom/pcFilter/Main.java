@@ -34,7 +34,7 @@ public class Main {
 
     public static boolean DEBUG;
     private static final int RANDOM_POINTS_NUMBER = 1000;
-    private static final float RANDOM_POINTS_CUBE_SIZE = 123456;
+    private static final float RANDOM_POINTS_CUBE_SIZE = 100;
     private static final String RANDOM_FILE1_HEADER = "// X Y Z R G B Class NumberOfReturns PIntensity";
     private static final String RANDOM_FILE2_HEADER = "// X Y Z Class LIntensity dZVariance ScanAngleRank EchoRatio";
 
@@ -615,7 +615,7 @@ public class Main {
         } while (true);
     }
 
-    public void quit(){System.out.println("..Bye bye!"); System.exit(1);}
+    public void quit(){System.out.println("\n..Bye bye!"); System.exit(1);}
 
     public void printLocation(Point location){
         int voxel;
@@ -637,7 +637,7 @@ public class Main {
             if(verbose) {
                 for (PointClassification pclass : PointClassification.values()) {
                     points = pcf.getPoints(ft, voxel, pclass);
-                    //check it points is null
+                    //check if points is null
                     if (points == null || points.size() == 0) continue;
 
                     System.out.println("...." + pclass.name());
@@ -646,11 +646,18 @@ public class Main {
                         System.out.println("......" + p.toString(pcf.getCoordShift()));
                 }
             }else {
-                points = pcf.getPoints(ft, voxel, false);
-                //check it points is null
-                if (points == null || points.size() == 0) continue;
+//                points = pcf.getPoints(ft, voxel, false);
+//                //check it points is null
+//                if (points == null || points.size() == 0) continue;
+//
+//                System.out.println("...." + points.size() + " points");
+                for (PointClassification pclass : PointClassification.values()) {
+                    points = pcf.getPoints(ft, voxel, pclass);
+                    //check if points is null
+                    if (points == null || points.size() == 0) continue;
 
-                System.out.println("...." + points.size() + " points");
+                    System.out.println("...." + pclass.name() + " -> " + points.size() + " points");
+                }
             }
         }
     }
@@ -699,8 +706,12 @@ public class Main {
 
             case 1:
                 switch(selected){
+
+                    /////////////////////////////////
+                    // PRINT INFO
                     case 1:
                         while (true) {
+                            //TODO: add menu voices: write points, show statistics, voxel density, etc..
                             System.out.println("\nprint info:\n 1. location\n 2. points in class\n 3. points in voxel\n 4. back");
                             if (!scanner.hasNextInt()) {
                                 System.out.println("only integers allowed! ");
@@ -710,16 +721,23 @@ public class Main {
                             sel = scanner.nextInt();
 
                             switch (sel) {
+
+                                /////////////////////////////////
+                                // LOCATION
                                 case 1:
-                                    String location;// = scanner.next();
+                                    String location;
                                     String[] coords;
 
                                     do {
-                                        System.out.println("enter location (x,y,z) :");
-                                        location = scanner.next(); //System.out.println("location: " + location);
+                                        if(error)
+                                            System.out.println("enter location (x,y,z) :");
+                                        location = scanner.nextLine(); //System.out.println("location: " + location);
 
                                         error = false;
                                         if (location.isEmpty()) error = true;
+
+                                        location = location.replaceAll("[^a-zA-Z0-9+ .,]|(?<!\\d)[.,]|[\\s+]", "");
+
                                         coords = location.split(",");
                                         if (coords.length != 3) error = true;
                                     } while (error);
@@ -731,20 +749,20 @@ public class Main {
                                     printLocation(point);
                                     break;
 
+                                /////////////////////////////////
+                                // POINTS IN CLASS
                                 case 2:
                                     int classType = -1;
 
-                                    // check integer
                                     do {
                                         error = false;
                                         System.out.println("enter class (integer): ");
+                                        // check integer
                                         if (!scanner.hasNextInt()) {
                                             System.out.println("only integers allowed! ");
                                             scanner.next(); // discard
-                                            error = true;
-                                            continue;
-                                        }
-                                        classType = scanner.nextInt();
+                                            error = true; continue;
+                                        } classType = scanner.nextInt();
 
                                         // check if class exsist
                                         if (PointClassification.parse(classType) == null) {error = true; continue;}
@@ -752,6 +770,7 @@ public class Main {
                                         break;
                                     } while (error);
 
+                                    //TODO: write a function to ask user verbose
                                     do {
                                         System.out.println("print verbose (y/n): ");
                                         yn = scanner.next();
@@ -762,35 +781,31 @@ public class Main {
 
                                     verbose = yn.equals("y") ? true : false;
 
-                                    //TODO: add verbose option
                                     printPointsInClass(PointClassification.parse(classType), verbose);
-                                    //System.out.println("class " + PointClassification.parse(classType).name() + " ok now what?");
 
                                     break;
 
+                                /////////////////////////////////
+                                // POINTS IN VOXEL
                                 case 3:
                                     int voxel = -1;
 
-                                    // check integer
                                     do{
                                         error = false;
                                         System.out.println("enter voxel (integer): ");
+                                        // check integer
                                         if (!scanner.hasNextInt()) {
                                             System.out.println("only integers allowed! ");
                                             scanner.next(); // discard
-                                            error = true;
-                                            continue;
+                                            error = true; continue;
                                         }
                                         voxel = scanner.nextInt();
 
                                         // check if voxel exsist
-                                        //System.out.println(pcf.getVGrid().getSize());
                                         if (voxel < 0 || voxel >= pcf.getVGrid().getSize()) {
                                             System.out.println("the voxel doens't exsist!");
-                                            error = true;
-                                            continue;
+                                            error = true; continue;
                                         }
-
                                         break;
                                     }while(error);
 
@@ -806,9 +821,10 @@ public class Main {
                                     printPointsInVoxel(voxel, verbose);
                                     break;
 
+                                /////////////////////////////////
+                                // BACK
                                 case 4:
-                                    history.clear();
-                                    menuLevel = -1;
+                                    history.clear(); menuLevel = -1;
                                     return selected;
 
                                 default: System.out.println("print info: no menu selection available! "); continue;
@@ -816,10 +832,14 @@ public class Main {
                             break;
                         }
 
+                        /////////////////////////////////
+                        // FUNCTION COMPLETED
                         selected = history.pop();
                         menuLevel--;
                         return selected;
 
+                    /////////////////////////////////
+                    // CHANGE PARAMETERS
                     case 2:
                         while (true) {
                             System.out.println("\nchange parameters:\n 1. voxelSide\n 2. back ");
@@ -831,6 +851,9 @@ public class Main {
                             sel = scanner.nextInt();
 
                             switch (sel) {
+
+                                /////////////////////////////////
+                                // VOXELSIDE
                                 case 1:
                                     Float voxelSide;
                                     for(;;) {
@@ -843,13 +866,14 @@ public class Main {
                                         break;
                                     }
 
-                                    //TODO: recompute voxelSide
+                                    //recompute VOXELGRID
                                     createPcFilter(voxelSide);
                                     break;
 
+                                /////////////////////////////////
+                                // BACK
                                 case 2:
-                                    history.clear();
-                                    menuLevel = -1;
+                                    history.clear(); menuLevel = -1;
                                     return selected;
 
                                 default: System.out.println("change parameters: no menu selection available! "); continue;
@@ -857,6 +881,8 @@ public class Main {
                             break;
                         }
 
+                        /////////////////////////////////
+                        // FUNCTION COMPLETED
                         selected = history.pop();
                         menuLevel--;
                         return selected;
@@ -864,6 +890,7 @@ public class Main {
                     case 3: quit();
 
                 }
+
                 history.pop();
                 System.out.println("no menu selection available!");
                 return -1;

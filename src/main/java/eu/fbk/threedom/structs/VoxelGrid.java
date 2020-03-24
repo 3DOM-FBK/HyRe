@@ -106,7 +106,6 @@ public class VoxelGrid {
 //        System.out.println("..voxels with at least one point " + totalSet.size());
     }
 
-
     public int id(int x, int y, int z) {
         return x + (y * width) + (z * width*height);
     }
@@ -156,30 +155,14 @@ public class VoxelGrid {
         return getVoxelId(p.x, p.y, p.z);
     }
 
-    /**
-     *
-     * @param key
-     * @return
-     */
     public Voxel getVoxel(int key) {
         return voxels[key];
     }
 
-    /**
-     *
-     * @param key
-     * @param v
-     * @return
-     */
     public Voxel setVoxel(int key, Voxel v) {
         return voxels[key] = v;
     }
 
-    /**
-     *
-     * @param fileType
-     * @return
-     */
     public List<Point> getPoints(FileType fileType){
         Set voxelSet = getVoxels(fileType);
         List<Point> list = new ArrayList<>();
@@ -190,11 +173,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param voxelId
-     * @return
-     */
     public List<Point> getPoints(int voxelId){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -215,12 +193,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param fileType defines if it is a photogrammetric point (0) or a lidar point
-     * @param voxelId
-     * @return
-     */
     public List<Point> getPoints(FileType fileType, int voxelId){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -242,13 +214,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param fileType
-     * @param voxelId
-     * @param pointType
-     * @return
-     */
     public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -270,13 +235,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param fileType
-     * @param voxelId
-     * @param scoreCheck
-     * @return
-     */
     public List<Point> getPoints(FileType fileType, int voxelId, boolean scoreCheck){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -303,15 +261,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param fileType
-     * @param voxelId
-     * @param pointType
-     * @param scoreCheck
-     * @param coordShift
-     * @return
-     */
     public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck, Point coordShift){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
@@ -347,11 +296,6 @@ public class VoxelGrid {
         return list;
     }
 
-    /**
-     *
-     * @param fileType
-     * @return
-     */
     public Set<Integer> getVoxels(FileType fileType){
         Set voxelsSet = new LinkedHashSet<Integer>();
 
@@ -370,11 +314,6 @@ public class VoxelGrid {
         return voxelsSet;
     }
 
-    /**
-     *
-     * @param fileTypes
-     * @return
-     */
     public Set<Integer> getVoxels(FileType[] fileTypes){
         Set voxelsSet = new LinkedHashSet<Integer>();
 
@@ -395,12 +334,6 @@ public class VoxelGrid {
         return voxelsSet;
     }
 
-    /**
-     *
-     * @param fileType
-     * @param pointType
-     * @return
-     */
     public Set<Integer> getVoxels(FileType fileType, PointClassification pointType){
         switch (pointType){
             case C0:
@@ -413,12 +346,6 @@ public class VoxelGrid {
         }
     }
 
-    /**
-     *
-     * @param fileType
-     * @param pointTypes
-     * @return
-     */
     public Set<Integer> getVoxels(FileType fileType, String[] pointTypes){
         Set<Integer> voxels = getVoxels(fileType);
 

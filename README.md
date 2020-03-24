@@ -114,6 +114,7 @@ voxelSide != 0
 
 ### PHOTO/LIDAR INTERSECTION IN EACH VOXEL
 ```java
+printMultiFileTypeVoxels()
     // find the set of voxels that contain both lidar and photo points
     for each fileType
         find intersection getVoxels(fileType)
@@ -122,19 +123,9 @@ voxelSide != 0
 
 ### MULTICLASS IN EACH INTERSECTION VOXEL
 ```java
-    // find the set of voxels that contain both C0 & C1 lidar points
-    // for each fileType
-    //     set c0_c1
-    //     for v in intersection
-    //         c0 = false
-    //         c1 = false
-    //         for each point
-    //             if p.c0 -> c0 = true
-    //             if p.c1 -> c1 = true
-    //             if c0 && c1 -> add v in c0_c1
-    //             break
-    //TODO: optimize combination without permutations (DONE.)
-
+printMultiClassVoxels()
+    // find the set of voxels that contain a combination of classes in lidar and
+		// photo clouds
     classes = Combinator.generate()
     for each fileType
         for each combination
@@ -142,6 +133,8 @@ voxelSide != 0
 ```
 
 ### FILTERED INTERSECTION SET
+```java
+printFilteredVoxels()
     // find (filteredIntersectionSet) the set of voxels that contain both lidar
     // and photo points (intersection) and at least one class where both fileTypes
     // meet density criteria (voxel_v density >= voxel density mean)
@@ -153,9 +146,11 @@ voxelSide != 0
                 else passed true
 
             if passed add v, break
-
+```
 
 ### SCORED FILTERED INTERSECTION SET
+```java
+printScoredFilteredVoxels()
     // find (scoredFilteredIntersectionSet) the set of voxels that contain both lidar
     // and photo points (intersection) and at least one class where both fileTypes
     // meet density criteria (voxel_v density >= voxel density mean)
@@ -168,7 +163,7 @@ voxelSide != 0
                 else passed true
 
             if passed add v, break
-
+```
 
 ## WRITE DATA
 ```java
