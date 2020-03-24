@@ -261,7 +261,8 @@ public class VoxelGrid {
         return list;
     }
 
-    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck, Point coordShift){
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType,
+                                 boolean scoreCheck, Point coordShift, boolean verbose){
         List<Point> list = new ArrayList<>();
         Voxel vox = getVoxel(voxelId);
 
@@ -275,7 +276,7 @@ public class VoxelGrid {
             if(scoreCheck) {
                 if (p.getType() == fileType && p.getClassification() == pointType && p.getScore() <= p.getThreshold()) {
                     list.add(p);
-                    if(Main.DEBUG) {
+                    if(verbose) {
                         System.out.println("........" + p.toString(coordShift));
                         System.out.println("..........fileType: " + p.getType());
                         System.out.println("..........fileClass: " + p.getClassification());

@@ -432,8 +432,8 @@ public class PcFilter {
      * @param scoreCheck evaluate the comparison between score and threshold
      * @return
      */
-    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck){
-        return vGrid.getPoints(fileType, voxelId, pointType, scoreCheck, coordShift);
+    public List<Point> getPoints(FileType fileType, int voxelId, PointClassification pointType, boolean scoreCheck, boolean verbose){
+        return vGrid.getPoints(fileType, voxelId, pointType, scoreCheck, coordShift, verbose);
     }
 
 
