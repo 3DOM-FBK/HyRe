@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'eu.fbk.threedom'
-version '1.9'
+version '1.9.2'
 
 sourceCompatibility = 1.8
 

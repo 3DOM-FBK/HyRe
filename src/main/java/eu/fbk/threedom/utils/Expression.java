@@ -79,7 +79,8 @@ public class Expression {
                     else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
                     else throw new RuntimeException("Unknown function: " + func);
                 } else {
-                    throw new RuntimeException("Unexpected: " + (char)ch);
+                    throw new RuntimeException("Unexpected: " + (char)ch +
+                            " from formula: " + str);
                 }
 
                 if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation

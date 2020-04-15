@@ -9,7 +9,6 @@ import eu.fbk.threedom.structs.Voxel;
 import eu.fbk.threedom.structs.VoxelGrid;
 import eu.fbk.threedom.utils.*;
 import eu.fbk.threedom.structs.LinkedList;
-import eu.fbk.threedom.pcNorm.Main;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.JSONArray;
@@ -208,8 +207,8 @@ public class PcFilter {
             this.properties[fileType.ordinal()] = props;
 
             //if(Main.DEBUG) {
-            System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
-            System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
+                System.out.println("..header " + Arrays.toString(header[fileType.ordinal()]));
+                System.out.println("..properties " + Arrays.toString(properties[fileType.ordinal()]));
             //}
 
             for (String prop : props) {
@@ -365,9 +364,15 @@ public class PcFilter {
                 double x = (2 * (val - propsStats.get(prop+"_mean"))) / propsStats.get(prop+"_std");
                 float norm_val = 1 / (1 + (float)Math.exp(-x));
                 p.setNormProp(i, norm_val);
+                //System.out.println("prop: " + prop + " -> " + val + "(norm. " + norm_val + ")");
 
-                if(Main.DEBUG)
+                // = 1 / (1 + exp (-2 / st.dev * (val - media) ))
+
+                if(Main.DEBUG) {
                     System.out.println("...." + prop + ": " + val + " -> " + norm_val);
+                    //System.out.println("......mean " + propsStats.get(prop+"_mean"));
+                    //System.out.println("......std " + propsStats.get(prop+"_std"));
+                }
             }
 
             JSONObject classTypeObj = (JSONObject) classTypes.get(p.getClassification().ordinal());
@@ -387,6 +392,8 @@ public class PcFilter {
     public double evaluateScore(Point p, String formula){
         StringBuilder sb = new StringBuilder();
 
+        //System.out.println("\nWorking on Bug\n..formula : " + formula);
+
         for(String str : formula.split(" ")){
             // if it is a property, retrieve its value
             if(propsStats.containsKey(str + "_N")) {
@@ -396,9 +403,18 @@ public class PcFilter {
                 sb.append(str);
         }
 
-        //System.out.println("formulaa: " + sb);
+        //System.out.println("..formula (numbers): " + sb);
 
-        return Expression.eval(sb.toString());
+        double result = 0;
+
+        try{
+            Expression.eval(sb.toString());
+        }catch(RuntimeException rte){
+            result = 1;
+        }
+
+        //return Expression.eval(sb.toString());
+        return result;
     }
 
 
