@@ -28,14 +28,7 @@ public enum PointClassification {
 
     C0(0),
     C1(1),
-    C2(2);//,
-//    C3(3),
-//    C4(4),
-//    C5(5),
-//    C6(6),
-//    C7(7),
-//    C8(8),
-//    C9(9);
+    C2(2);
 
     public int type;
 
@@ -48,13 +41,6 @@ public enum PointClassification {
             case 0: return C0; //ROOF
             case 1: return C1; //FACADES
             case 2: return C2; //STREETS
-//            case 3: return C3;
-//            case 4: return C4;
-//            case 5: return C5;
-//            case 6: return C6;
-//            case 7: return C7;
-//            case 8: return C8;
-//            case 9: return C9;
             default: return null;
         }
     }

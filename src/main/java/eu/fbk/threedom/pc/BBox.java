@@ -28,7 +28,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
 
 public class BBox {
 

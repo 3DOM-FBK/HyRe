@@ -31,13 +31,10 @@ import javax.vecmath.Vector3d;
 
 public class Point extends Vector3d {
 
-//    @Setter @Getter private int id;
-
     @Setter @Getter private int r;
     @Setter @Getter private int g;
     @Setter @Getter private int b;
 
-    //@Getter @Setter private float intensity;
     @Getter @Setter private FileType type; // 0 photogrammetric, 1 lidar
     @Getter @Setter private PointClassification classification; // 0 1 2
 
@@ -57,9 +54,6 @@ public class Point extends Vector3d {
         super.x = x; super.y = y; super.z = z;
         this.r = 0; this.g = 0; this.b = 0;
 
-//        propertiesValues = new float[type.getProps().length];
-//        propertiesNormValues = new float[type.getProps().length];
-
         propertiesValues = new double[type.getProps().length];
         propertiesNormValues = new float[type.getProps().length];
     }
@@ -68,9 +62,6 @@ public class Point extends Vector3d {
         this.type = type;
         super.x = x; super.y = y; super.z = z;
         this.r = r; this.g = g; this.b = b;
-
-//        propertiesValues = new float[type.getProps().length];
-//        propertiesNormValues = new float[type.getProps().length];
 
         propertiesValues = new double[type.getProps().length];
         propertiesNormValues = new float[type.getProps().length];
@@ -149,15 +140,8 @@ public class Point extends Vector3d {
                 + (z + min.getZ()) + ")";
     }
 
-//    public void setProp(int propertyIndex, Float value){propertiesValues[propertyIndex] = value;}
-//    public void setNormProp(int propertyIndex, Float value){propertiesNormValues[propertyIndex] = value;}
-
     public void setProp(int propertyIndex, Double value){ propertiesValues[propertyIndex] = value;}
     public void setNormProp(int propertyIndex, float value){propertiesNormValues[propertyIndex] = value;    }
-
-//    public float getProp(int propertyIndex){return propertiesValues[propertyIndex];}
-//    public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
-
     public double getProp(int propertyIndex){return propertiesValues[propertyIndex];}
     public float getNormProp(int propertyIndex){return propertiesNormValues[propertyIndex];}
 
