@@ -13,5 +13,5 @@ Usage: hyRe photo_file.txt lidar_file.txt voxelSide [-o (--output) output] [-v (
   
 Example:
 ```
-$ pcFilter f1.txt f2.txt 1.0f -v
+$ hyRe f1.txt f2.txt 1.0f -v
 ```
