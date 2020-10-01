@@ -100,7 +100,7 @@ public class Main {
             // if there's a problem in the command line,
             // you'll getQTB this exception. this will report
             // an error message.
-            System.err.print(getNotice() + "Usage: pcFilter");
+            System.err.print(getNotice() + "Usage: hyRe");
             parser.printSingleLineUsage(System.err);
 
             // print the list of available options
@@ -109,7 +109,7 @@ public class Main {
             System.err.print("  voxelSide: the lenght of the voxel cube\n");
 
             // print option sample. This is useful some time
-            System.err.println("\nExample:\n  pcFilter f1.txt f2.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
+            System.err.println("\nExample:\n  pcFilter photo_file.txt lidar_file.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
 
             System.err.println();
             System.err.println("Error: " + e.getMessage());
