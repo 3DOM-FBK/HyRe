@@ -1,5 +1,11 @@
 plugins {
     id 'java'
+    id "com.github.hierynomus.license" version "0.15.0"
+}
+
+license {
+    exclude "**/*.properties"
+    excludes(["**/*.txt", "**/*.json"])
 }
 
 group 'eu.fbk.threedom'
@@ -71,6 +77,47 @@ task distPcFilter(type: Jar, dependsOn: classes){
             destinationDir file('build/dist/')
 
             archiveName = "pcFilter-${project.version}.zip"
+        }.execute();
+    }
+}
+
+task distHyRe(type: Jar, dependsOn: classes){
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from {configurations.compile.collect {zipTree(it)}}
+
+    baseName = 'hyRe'
+
+    exclude '*.txt'
+    exclude 'eu/fbk/threedom/old'
+    exclude 'eu/fbk/threedom/pcNorm'
+
+    manifest {
+        attributes(
+                'Main-Class': project.mainClassName,
+                //"SplashScreen-Image": "splash.png",
+
+                "Implementation-Title": "${baseName}",
+                "Implementation-Version": version,
+                "Implementation-Vendor": "Welponer@FBK"
+        )
+    }
+
+    doLast {
+        // Create batch
+        File bat = new File(destinationDir, "${baseName}-${project.version}.bat")
+        destinationDir.mkdirs()
+        bat.write('java -jar -Xmx16G -Xms1G ' + archiveName + " PHOTO.txt LIDAR.txt 1.0 -w " + ' > output.log 2>&1')
+        // - XX:-UseGCOverheadLimit
+
+        // Create zip
+        task(ziphyRe, type: Zip){
+            from (['build/libs/']){
+                include("hyRe-${project.version}.jar", "hyRe-${project.version}.bat")
+            }
+            destinationDir file('build/dist/')
+
+            archiveName = "hyRe-${project.version}.zip"
         }.execute();
     }
 }

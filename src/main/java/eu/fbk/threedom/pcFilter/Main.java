@@ -1,3 +1,27 @@
+/**
+ * Hybrid Registration (C) 2019 is a command line software designed to
+ * analyze, co-register and filter airborne point clouds acquired by LiDAR sensors
+ * and photogrammetric algorithm.
+ * Copyright (C) 2019  Michele Welponer, mwelponer@gmail.com (Fondazione Bruno Kessler)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ * If not, see <https://www.gnu.org/licenses/> and file GPL3.txt
+ *
+ * -------------
+ * IntelliJ Program arguments:
+ * $ContentRoot$/resources/f1.txt $ContentRoot$/resources/f2.txt 1f -w -v
+ */
 package eu.fbk.threedom.pcFilter;
 
 import eu.fbk.threedom.pc.FileType;
@@ -18,8 +42,8 @@ import java.util.stream.Stream;
 
 public class Main {
 
-    @Argument(index=0, required = true, metaVar = "file1") File inFile1;
-    @Argument(index=1, required = true, metaVar = "file2") File inFile2;
+    @Argument(index=0, required = true, metaVar = "photo_file") File inFile1;
+    @Argument(index=1, required = true, metaVar = "lidar_file") File inFile2;
     @Argument(index=2, required = true, metaVar = "voxelSide") Float voxelSide;
     @Option(name = "-o", aliases = { "--output" }, metaVar = "output") String outFile;
     @Option(name = "-w", aliases = { "--overwrite" }, metaVar = "overWrite") Boolean overWrite;
@@ -50,6 +74,17 @@ public class Main {
     private int backIndex;
     private Stack<Integer> history;
 
+    private String getNotice(){
+        String notice = "";
+
+        notice += "Hybrid Registration (C) 2019 Michele Welponer - Fondazione Bruno Kessler\n";
+        notice += "This program comes with ABSOLUTELY NO WARRANTY;\n";
+        notice += "This is free software, and you are welcome to redistribute it\n";
+        notice += "under certain conditions;\n\n";
+
+        return notice;
+    }
+
     private void parseArgs(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
 
@@ -65,10 +100,8 @@ public class Main {
             // if there's a problem in the command line,
             // you'll getQTB this exception. this will report
             // an error message.
-            System.err.println(e.getMessage());
-            System.err.print("Usage: pcFilter");
+            System.err.print(getNotice() + "Usage: pcFilter");
             parser.printSingleLineUsage(System.err);
-            System.err.println();
 
             // print the list of available options
             parser.printUsage(System.err);
@@ -76,7 +109,10 @@ public class Main {
             System.err.print("  voxelSide: the lenght of the voxel cube\n");
 
             // print option sample. This is useful some time
-            System.err.println("\nExample:\n\n  pcFilter f1.txt f2.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
+            System.err.println("\nExample:\n  pcFilter f1.txt f2.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
+
+            System.err.println();
+            System.err.println("Error: " + e.getMessage());
             System.exit(1);
         }
     }
