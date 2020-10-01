@@ -109,7 +109,7 @@ public class Main {
             System.err.print("  voxelSide: the lenght of the voxel cube\n");
 
             // print option sample. This is useful some time
-            System.err.println("\nExample:\n  pcFilter photo_file.txt lidar_file.txt 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
+            System.err.println("\nExample:\n  pcFilter photo_file lidar_file 1.0f -v" + parser.printExample(OptionHandlerFilter.ALL));
 
             System.err.println();
             System.err.println("Error: " + e.getMessage());
