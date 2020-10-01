@@ -8,7 +8,7 @@ This program comes with ABSOLUTELY NO WARRANTY;
 This is free software, and you are welcome to redistribute it  
 under certain conditions;  
   
-Usage: hyRe photo_file.txt lidar_file.txt voxelSide [-o (--output) output] [-v (--verbose) verbose] [-w (--overwrite) overWrite]
+Usage: hyRe photo_file lidar_file voxelSide [-o (--output) output] [-v (--verbose) verbose] [-w (--overwrite) overWrite]
 - voxelSide: the lenght of the voxel cube  
   
 Example:
